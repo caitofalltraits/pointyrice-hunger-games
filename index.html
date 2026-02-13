@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PointyRice Hunger Games</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poetsen+One&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -119,10 +119,6 @@ img{-webkit-user-drag:none;user-select:none;pointer-events:none;}
   width:140px;
   filter:drop-shadow(0 4px 12px rgba(0,0,0,.1));
 }
-@keyframes ricebyBounce{
-  0%,100%{transform:translateY(0);}
-  50%{transform:translateY(-8px);}
-}
 @keyframes riceboyBounce{
   0%,100%{transform:translateY(0);}
   50%{transform:translateY(-8px);}
@@ -238,7 +234,7 @@ img{-webkit-user-drag:none;user-select:none;pointer-events:none;}
 .card-arrow{
   flex-shrink:0;
   font-size:1.4rem;
-  color:#ccc;
+  color:#999;
   transition:transform .2s,color .2s;
 }
 .game-card:hover .card-arrow{
@@ -261,12 +257,12 @@ img{-webkit-user-drag:none;user-select:none;pointer-events:none;}
 .coming-soon-title{
   font-family:'Poetsen One',cursive;
   font-size:.85rem;
-  color:#b8b136;
+  color:#7a7520;
   margin-bottom:4px;
 }
 .coming-soon-items{
   font-size:.8rem;
-  color:#888;
+  color:#666;
   line-height:1.4;
 }
 
@@ -275,7 +271,7 @@ img{-webkit-user-drag:none;user-select:none;pointer-events:none;}
    ========================================================= */
 .footer{
   font-size:.75rem;
-  color:#aaa;
+  color:#777;
   margin-top:8px;
 }
 .footer a{
@@ -348,7 +344,7 @@ img{-webkit-user-drag:none;user-select:none;pointer-events:none;}
         <div class="card-title">Cai Fan</div>
         <div class="card-desc">Economic rice with Auntie — pick your meats, veggies & more!</div>
       </div>
-      <div class="card-arrow">›</div>
+      <div class="card-arrow" aria-hidden="true">›</div>
     </a>
 
     <a href="nasi-padang/" class="game-card nasi-padang">
@@ -359,7 +355,7 @@ img{-webkit-user-drag:none;user-select:none;pointer-events:none;}
         <div class="card-title">Nasi Padang</div>
         <div class="card-desc">Banana leaf with Makcik — rendang, sambal & all the good stuff!</div>
       </div>
-      <div class="card-arrow">›</div>
+      <div class="card-arrow" aria-hidden="true">›</div>
     </a>
   </div>
 

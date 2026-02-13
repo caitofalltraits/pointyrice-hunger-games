@@ -21,6 +21,7 @@ body{
   display:flex;
   flex-direction:column;
   align-items:center;
+  touch-action: manipulation;
 }
 h1,h2,h3{font-family:'Poetsen One',cursive;}
 button{
@@ -57,6 +58,7 @@ img{-webkit-user-drag:none;user-select:none;}
   justify-content:space-between;
   align-items:center;
   padding:8px 0 4px;
+  padding-left:90px;
 }
 .brand{
   font-family:'Poetsen One',cursive;
@@ -117,20 +119,21 @@ img{-webkit-user-drag:none;user-select:none;}
   100%{opacity:1;transform:translateY(0);}
 }
 .dialogue-tap{
-  font-size:.72rem;
+  font-size:.95rem;
   color:#bb492b;
   margin-top:6px;
   animation:pulse 1.2s ease infinite;
   cursor:pointer;
   user-select:none;
   text-align:right;
+  min-height:44px;display:flex;align-items:center;justify-content:flex-end;
 }
 .dialogue-area.clickable{cursor:pointer;}
 .pro-tip{
   margin-top:8px;
   font-size:.82rem;
   line-height:1.45;
-  color:#7a5c2e;
+  color:#5a4420;
   font-style:italic;
 }
 
@@ -262,16 +265,16 @@ img{-webkit-user-drag:none;user-select:none;}
 .rotate-handle{
   display:none;
   position:absolute;
-  top:-14px;
-  right:-14px;
-  width:28px;
-  height:28px;
+  top:-18px;
+  right:-18px;
+  width:40px;
+  height:40px;
   background:#78b29b;
   border:2px solid #fff;
   border-radius:50%;
   align-items:center;
   justify-content:center;
-  font-size:14px;
+  font-size:18px;
   line-height:1;
   color:#fff;
   cursor:grab;
@@ -334,7 +337,7 @@ img{-webkit-user-drag:none;user-select:none;}
   left:50%;
   transform:translateX(-50%);
   font-size:.72rem;
-  color:#78b29b;
+  color:#4a8a70;
   white-space:nowrap;
   animation:fadeUp .6s ease;
 }
@@ -428,8 +431,8 @@ img{-webkit-user-drag:none;user-select:none;}
   background:none;
   color:#910f3f;
   box-shadow:none;
-  padding:4px 10px;
-  font-size:.78rem;
+  padding:10px 16px;
+  font-size:.85rem;
   text-decoration:underline;
   text-underline-offset:2px;
 }
@@ -438,7 +441,7 @@ img{-webkit-user-drag:none;user-select:none;}
 
 .dish-hint{
   font-size:.72rem;
-  color:#999;
+  color:#666;
   font-style:italic;
   margin-top:2px;
 }
@@ -457,6 +460,7 @@ img{-webkit-user-drag:none;user-select:none;}
   border-radius:20px;
   background:linear-gradient(to bottom, rgba(250,249,225,.15) 0%, rgba(250,249,225,.92) 45%, rgba(250,249,225,.98) 100%);
   animation:overlayFadeIn .3s ease-out;
+  touch-action:auto;
 }
 @keyframes overlayFadeIn{
   0%{opacity:0;transform:translateY(12px);}
@@ -478,8 +482,8 @@ img{-webkit-user-drag:none;user-select:none;}
   overflow-y:hidden;
   padding:4px 4px 10px;
   border-radius:10px;
-  -webkit-overflow-scrolling:touch;
   scroll-snap-type:x mandatory;
+  touch-action:pan-x;
 }
 .item-grid::-webkit-scrollbar{height:6px;}
 .item-grid::-webkit-scrollbar-track{background:#f2efdd;border-radius:3px;}
@@ -519,7 +523,7 @@ img{-webkit-user-drag:none;user-select:none;}
 }
 .item-card .item-price{
   font-size:.72rem;
-  color:#78b29b;
+  color:#4a8a70;
   font-weight:700;
   margin-top:2px;
 }
@@ -763,9 +767,32 @@ img{-webkit-user-drag:none;user-select:none;}
   color:#f8b401;
   margin-top:6px;
 }
+.back-home{
+  position:fixed;
+  top:12px;
+  left:60px;
+  z-index:999;
+  background:#f2efdd;
+  border:none;
+  border-radius:50%;
+  width:40px;
+  height:40px;
+  font-size:1.2rem;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+  transition:transform .15s;
+  text-decoration:none;
+  color:#910f3f;
+  font-weight:700;
+}
+.back-home:active{transform:scale(.9);}
 </style>
 </head>
 <body>
+<a href="../" class="back-home" aria-label="Back to menu" title="Back to menu">&#8592;</a>
 <div id="app">
   <!-- HEADER -->
   <div class="header">
@@ -776,7 +803,7 @@ img{-webkit-user-drag:none;user-select:none;}
   <!-- MAKCIK DIALOGUE + CONTROLS (all inside the speech bubble) -->
   <div class="dialogue-area" id="dialogueArea">
     <div class="dialogue-label">Makcik says:</div>
-    <div class="dialogue-text" id="dialogueText"></div>
+    <div class="dialogue-text" id="dialogueText" aria-live="polite"></div>
     <div class="controls" id="controls"></div>
   </div>
 
@@ -791,7 +818,7 @@ img{-webkit-user-drag:none;user-select:none;}
 <div class="cart-area" id="cartArea"></div>
 
 <!-- RESTART BUTTON (always visible) -->
-<button class="restart-btn" id="restartBtn" title="Start over">↺</button>
+<button class="restart-btn" id="restartBtn" title="Start over" aria-label="Start over">↺</button>
 
 <script>
 /* ==========================================================
@@ -2009,6 +2036,8 @@ function showSummary() {
 function restartGame() {
   state.cart = [];
   state.currentPlate = { items: [], stickers: [], dishCount: 0, hasRice: false, hasSauce: false, hasSunnyEgg: false, hasSambal: false };
+  state.zCounter = 10;
+  state.selectedSticker = null;
   $cartArea.innerHTML = '';
   $playArea.classList.add('hidden');
   $playArea.innerHTML = '';
