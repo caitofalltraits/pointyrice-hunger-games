@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Lo Hei Match-3! | PointyRice Hunger Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poetsen+One&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;min-height:100dvh;overflow-x:hidden;
+  font-family:'Barlow',sans-serif;
+  background:#faf9e1;color:#2b2b2b;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.back-home{
+  position:fixed;top:12px;left:12px;z-index:1000;
+  width:40px;height:40px;border-radius:50%;
+  background:#910f3f;color:#fff;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;font-weight:700;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:16px;text-align:center;}
+.screen.active{display:flex;}
+
+/* ===== TITLE ===== */
+#titleScreen{background:linear-gradient(180deg,#faf9e1 0%,#ffe6e6 50%,#fff5e6 100%);}
+.title-yusheng{width:180px;height:auto;animation:float 3s ease-in-out infinite;}
+h1{font-family:'Poetsen One',cursive;font-size:1.8rem;color:#910f3f;margin:12px 0 4px;}
+.subtitle{font-size:.95rem;color:#666;margin-bottom:16px;}
+
+.btn{
+  display:inline-block;padding:14px 32px;border-radius:12px;border:none;
+  font-family:'Poetsen One',cursive;font-size:1.1rem;cursor:pointer;
+  transition:transform .15s;min-height:44px;
+}
+.btn:active{transform:scale(.95);}
+.btn-primary{background:#f4894e;color:#fff;}
+.btn-accent{background:#f8b401;color:#fff;}
+.btn-secondary{background:#ebebec;color:#2b2b2b;}
+.btn-huat{background:linear-gradient(135deg,#ff4444,#f8b401);color:#fff;font-size:1.3rem;}
+
+/* ===== GAME SCREEN ===== */
+#gameScreen{padding:8px;justify-content:flex-start;gap:6px;}
+
+/* HUD */
+.game-hud{
+  width:100%;max-width:400px;display:flex;justify-content:space-between;
+  font-family:'Poetsen One',cursive;font-size:.85rem;padding:4px 0;
+}
+.hud-moves{color:#910f3f;}
+.hud-score{color:#3d081b;}
+
+/* ===== COLLECTION METER ===== */
+.meter-strip{
+  width:100%;max-width:400px;
+  display:flex;gap:4px;overflow-x:auto;overflow-y:hidden;
+  padding:4px 0;touch-action:pan-x;
+}
+.meter-item{
+  flex-shrink:0;display:flex;flex-direction:column;align-items:center;
+  width:48px;position:relative;
+}
+.meter-img{
+  width:36px;height:36px;object-fit:contain;
+  border-radius:8px;background:#fff;padding:2px;
+  border:2px solid #ebebec;transition:.3s;
+}
+.meter-item.complete .meter-img{border-color:#78b29b;filter:none;}
+.meter-item:not(.complete) .meter-img{filter:grayscale(.5);opacity:.6;}
+.meter-bar{
+  width:100%;height:4px;background:#ebebec;border-radius:2px;margin-top:2px;overflow:hidden;
+}
+.meter-fill{height:100%;background:#78b29b;border-radius:2px;transition:width .3s;}
+.meter-check{
+  position:absolute;top:-2px;right:2px;
+  font-size:.7rem;display:none;
+}
+.meter-item.complete .meter-check{display:block;}
+
+/* ===== GRID ===== */
+.grid-wrap{
+  position:relative;width:100%;max-width:400px;
+  aspect-ratio:1;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  grid-template-rows:repeat(7,1fr);
+  gap:3px;width:100%;height:100%;
+  background:#f2efdd;border-radius:12px;padding:4px;
+}
+.cell{
+  position:relative;border-radius:8px;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:transform .15s,background .2s;
+  overflow:hidden;
+  -webkit-user-select:none;user-select:none;
+}
+.cell img{
+  width:80%;height:80%;object-fit:contain;pointer-events:none;
+  transition:transform .2s;
+}
+.cell.selected{
+  background:#fff9e6;
+  box-shadow:0 0 0 2px #f8b401;
+  transform:scale(1.05);
+  z-index:2;
+}
+.cell.hint{animation:hintPulse .6s ease-in-out 3;}
+.cell.matched{animation:matchPop .35s ease-out forwards;}
+.cell.falling{animation:fallIn .3s ease-out;}
+.cell.power{background:linear-gradient(135deg,#fff9e6,#ffe6e6);}
+
+/* Power-up indicators */
+.cell .power-icon{
+  position:absolute;top:2px;right:2px;font-size:.6rem;
+  z-index:3;
+}
+
+/* ===== BLESSING POPUP ===== */
+.blessing-popup{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:200;background:#fff;border-radius:16px;padding:20px 24px;
+  text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.2);
+  animation:bounceIn .5s cubic-bezier(.34,1.56,.64,1);
+  max-width:300px;width:90%;
+}
+.blessing-popup.hidden{display:none;}
+.blessing-emoji{font-size:2rem;}
+.blessing-text{font-family:'Poetsen One',cursive;color:#910f3f;font-size:1.1rem;margin:8px 0;}
+.blessing-sub{font-size:.8rem;color:#666;}
+
+/* ===== FORTUNE SCREEN ===== */
+#fortuneScreen{background:linear-gradient(180deg,#910f3f 0%,#3d081b 100%);color:#fff;}
+.fortune-ball{
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle at 40% 40%,#444,#111);
+  display:flex;align-items:center;justify-content:center;
+  margin:16px;box-shadow:0 8px 30px rgba(0,0,0,.5);
+  position:relative;overflow:hidden;
+}
+.fortune-window{
+  width:80px;height:80px;border-radius:50%;
+  background:#1a1a4e;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:8px;
+}
+.fortune-window span{
+  font-family:'Poetsen One',cursive;font-size:.65rem;color:#8bf;
+  line-height:1.2;
+}
+.fortune-ball.shaking{animation:shake8ball 1s ease-in-out;}
+.fortune-ball.revealed .fortune-window{background:#2a2a6e;}
+.fortune-ball.revealed .fortune-window span{font-size:.7rem;color:#fff;}
+
+.fortune-title{font-family:'Poetsen One',cursive;font-size:1.8rem;margin:12px 0;}
+.fortune-subtitle{font-size:.9rem;color:#f3aecb;margin-bottom:16px;}
+.fortune-result{
+  background:rgba(255,255,255,.1);border-radius:16px;padding:20px;
+  max-width:320px;width:100%;margin:12px 0;
+}
+.fortune-text{font-family:'Poetsen One',cursive;font-size:1.2rem;color:#f8b401;line-height:1.4;}
+.fortune-sub{font-size:.85rem;color:#f3aecb;margin-top:8px;}
+
+/* ===== WIN PLATE ===== */
+.win-plate{width:160px;height:auto;margin:12px 0;}
+
+/* ===== ANIMATIONS ===== */
+@keyframes float{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-8px) rotate(2deg);}}
+@keyframes bounceIn{0%{transform:translate(-50%,-50%) scale(0);}100%{transform:translate(-50%,-50%) scale(1);}}
+@keyframes hintPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);background:#fff9e6;}}
+@keyframes matchPop{
+  0%{transform:scale(1);opacity:1;}
+  50%{transform:scale(1.3);opacity:.5;}
+  100%{transform:scale(0);opacity:0;}
+}
+@keyframes fallIn{0%{transform:translateY(-100%);opacity:0;}100%{transform:translateY(0);opacity:1;}}
+@keyframes shake8ball{
+  0%,100%{transform:rotate(0);}
+  10%{transform:rotate(15deg);}
+  20%{transform:rotate(-15deg);}
+  30%{transform:rotate(12deg);}
+  40%{transform:rotate(-12deg);}
+  50%{transform:rotate(8deg);}
+  60%{transform:rotate(-8deg);}
+  70%{transform:rotate(4deg);}
+  80%{transform:rotate(-4deg);}
+  90%{transform:rotate(2deg);}
+}
+
+@media(max-width:380px){
+  h1{font-size:1.5rem;}
+  .meter-item{width:40px;}
+  .meter-img{width:30px;height:30px;}
+}
+</style>
+</head>
+<body>
+<a href="../" class="back-home" aria-label="Back to menu">←</a>
+
+<!-- ===== TITLE ===== -->
+<div id="titleScreen" class="screen active">
+  <img src="img/yusheng1_FinalPNGVersion.png" class="title-yusheng" alt="Yu Sheng">
+  <h1>🧧 Lo Hei Match-3!</h1>
+  <p class="subtitle">Match ingredients to build the perfect Yu Sheng!</p>
+  <p style="font-size:.85rem;color:#888;max-width:300px;margin-bottom:20px;">
+    Swap tiles to match 3+ of the same ingredient. Fill every meter to complete your Lo Hei plate and reveal your prosperity fortune!
+  </p>
+  <button class="btn btn-huat" onclick="startGame()">🧧 Huat Ah!</button>
+</div>
+
+<!-- ===== GAME ===== -->
+<div id="gameScreen" class="screen">
+  <div class="game-hud">
+    <span class="hud-moves" id="hudMoves">Moves: 50</span>
+    <span class="hud-score" id="hudScore">Score: 0</span>
+  </div>
+  <div class="meter-strip" id="meterStrip"></div>
+  <div class="grid-wrap">
+    <div class="grid" id="grid"></div>
+  </div>
+  <div class="blessing-popup hidden" id="blessingPopup">
+    <div class="blessing-emoji" id="blessingEmoji">🧧</div>
+    <div class="blessing-text" id="blessingText">年年有余!</div>
+    <div class="blessing-sub" id="blessingSub">Abundance every year!</div>
+  </div>
+</div>
+
+<!-- ===== FORTUNE ===== -->
+<div id="fortuneScreen" class="screen">
+  <img src="img/yusheng1_FinalPNGVersion.png" class="win-plate" alt="Complete Yu Sheng">
+  <div class="fortune-title">🧧 HUAT AH!</div>
+  <div class="fortune-subtitle">You completed the Lo Hei!</div>
+  <div class="fortune-ball" id="fortuneBall" onclick="revealFortune()">
+    <div class="fortune-window"><span>Tap to reveal your fortune</span></div>
+  </div>
+  <div class="fortune-result hidden" id="fortuneResult">
+    <div class="fortune-text" id="fortuneText"></div>
+    <div class="fortune-sub" id="fortuneSub"></div>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:12px;" id="fortuneButtons" class="hidden">
+    <button class="btn btn-secondary" onclick="goToTitle()">Play Again</button>
+    <button class="btn btn-accent" onclick="window.open('https://www.pointyrice.com','_blank')">🛒 Get Stickers!</button>
+  </div>
+</div>
+
+<!-- ===== GAME OVER ===== -->
+<div id="gameOverScreen" class="screen">
+  <div style="font-size:3rem;margin-bottom:8px;">😅🥗</div>
+  <h1>Out of Moves!</h1>
+  <p class="subtitle" id="gameOverText">You collected 8/12 ingredients. So close!</p>
+  <div style="display:flex;gap:12px;margin-top:20px;">
+    <button class="btn btn-primary" onclick="startGame()">Try Again</button>
+    <button class="btn btn-secondary" onclick="goToTitle()">Menu</button>
+  </div>
+</div>
+
+<script>
+/* ========================================================
+   YU SHENG: LO HEI MATCH-3!
+   Match-3 puzzle with collection meter + fortune reveal
+   ======================================================== */
+
+const IMG = 'img/';
+const COLS = 7, ROWS = 7;
+const MAX_MOVES = 50;
+
+// ===== INGREDIENTS (tiles) =====
+const INGREDIENTS = [
+  {id:'carrot',    name:'Carrot',          img:'01_carrot.png',            blessing:'金玉满堂',    blessingEn:'May your home be filled with gold and jade'},
+  {id:'gradish',   name:'Green Radish',    img:'02_greenradish.png',       blessing:'青春永驻',    blessingEn:'Forever youthful'},
+  {id:'wradish',   name:'White Radish',    img:'03_whiteradish.png',       blessing:'风生水起',    blessingEn:'Good fortune and prosperity'},
+  {id:'salmon',    name:'Salmon',          img:'04_salmon.png',            blessing:'年年有余',    blessingEn:'Abundance every year'},
+  {id:'pomelo',    name:'Pomelo',          img:'05_pomelo.png',            blessing:'大吉大利',    blessingEn:'Great luck and great profit'},
+  {id:'pepper',    name:'Pepper',          img:'06_pepper.png',            blessing:'鸿运当头',    blessingEn:'Great fortune is upon you'},
+  {id:'peanut',    name:'Peanut',          img:'07_peanut.png',            blessing:'金银满屋',    blessingEn:'House full of gold and silver'},
+  {id:'sesame',    name:'Sesame',          img:'08_sesame.png',            blessing:'芝麻开花节节高', blessingEn:'Rising higher and higher'},
+  {id:'plum',      name:'Plum Sauce',      img:'09o_plumsauce and oil.png',blessing:'甜甜蜜蜜',    blessingEn:'Sweet and happy life'},
+  {id:'crackers',  name:'Golden Crackers', img:'10_goldencrackers.png',    blessing:'满地黄金',    blessingEn:'Gold scattered everywhere'},
+  {id:'ginger',    name:'Pickled Ginger',  img:'11_redpickledginger.png',  blessing:'好运连连',    blessingEn:'Luck after luck'},
+  {id:'cucumber',  name:'Cucumber',        img:'12_cucumber.png',          blessing:'步步高升',    blessingEn:'Rising step by step'},
+];
+
+// Use 8 of 12 ingredients on the grid (keeps grid manageable)
+const GRID_TYPES = INGREDIENTS.slice(0, 8);
+
+// ===== 88 FORTUNES =====
+const FORTUNES = [
+  {text:'万事如意',sub:'May all your wishes come true'},
+  {text:'恭喜发财',sub:'Wishing you wealth and prosperity'},
+  {text:'身体健康',sub:'Good health always'},
+  {text:'心想事成',sub:'May your heart\'s desires come true'},
+  {text:'一帆风顺',sub:'Smooth sailing ahead'},
+  {text:'财源广进',sub:'May wealth flow in from all directions'},
+  {text:'吉祥如意',sub:'Good fortune and happiness'},
+  {text:'龙马精神',sub:'Vitality of a dragon and horse'},
+  {text:'步步高升',sub:'Rising higher with every step'},
+  {text:'大展宏图',sub:'Grand plans come to fruition'},
+  {text:'鸿运当头',sub:'Great fortune is upon you'},
+  {text:'花开富贵',sub:'Blossoming into wealth and status'},
+  {text:'岁岁平安',sub:'Peace and safety year after year'},
+  {text:'笑口常开',sub:'Always smiling, always happy'},
+  {text:'幸福美满',sub:'Complete happiness and fulfillment'},
+  {text:'出入平安',sub:'Safety wherever you go'},
+  {text:'学业进步',sub:'Excel in your studies'},
+  {text:'工作顺利',sub:'Smooth-sailing career'},
+  {text:'爱情甜蜜',sub:'Sweet sweet love'},
+  {text:'合家欢乐',sub:'Whole family happiness'},
+  // Singlish / funny ones
+  {text:'HUAT BIG BIG! 🧧',sub:'Your ang bao this year: EXTRA THICC'},
+  {text:'Steady Pom Pi Pi 💪',sub:'Everything you do this year will go smoothly'},
+  {text:'4D Sure Strike! 🎰',sub:'Your lucky numbers are on the way (disclaimer: not financial advice lah)'},
+  {text:'Shiok Sendiri 😎',sub:'This year you will treat yourself like royalty'},
+  {text:'Queue King/Queen 👑',sub:'Every queue you join this year will move FAST'},
+  {text:'No More Jialat 🙅',sub:'All your problems will solve themselves'},
+  {text:'Makan Non-Stop 🍜',sub:'Every meal this year will be delicious'},
+  {text:'Confirm Plus Chop ✅',sub:'Whatever you\'re hoping for — confirmed happening'},
+  {text:'Lobang King 🤑',sub:'Good deals and discounts will find YOU this year'},
+  {text:'WiFi Always Full Bar 📶',sub:'Your connection (and life) will always be strong'},
+  {text:'Taxi Always Available 🚕',sub:'You will never wait long for anything this year'},
+  {text:'Chope Expert 💺',sub:'The best seats in life are reserved for you'},
+  {text:'MRT No Breakdown 🚇',sub:'Your journey through life will be smooth and on time'},
+  // Food-themed
+  {text:'Extra Chilli, Extra Life 🌶️',sub:'Spice makes everything nicer — your year will be EXTRA'},
+  {text:'Chicken Rice Extra Roast Pork 🍗',sub:'Every meal this year comes with bonus good stuff'},
+  {text:'Mee Goreng Special 🍝',sub:'Your life this year? Full of flavour, zero bland moments'},
+  {text:'Kopi O Kosong Energy ☕',sub:'Pure energy, no sugar crash — you\'ll power through everything'},
+  {text:'Laksa Level Love 🍜',sub:'Rich, warm, and deeply satisfying — that\'s your year'},
+  {text:'Char Kway Teow Wok Hei 🔥',sub:'You bring the fire and flavour to everything you touch'},
+  {text:'Ice Kachang Brain Freeze ❄️',sub:'Cool head, sweet rewards — you\'ll handle pressure like a pro'},
+  {text:'Nasi Lemak Complete Set 🍛',sub:'Everything in your life comes together perfectly'},
+  // More traditional
+  {text:'福如东海',sub:'Blessings as vast as the eastern sea'},
+  {text:'寿比南山',sub:'Long life like the southern mountains'},
+  {text:'前程似锦',sub:'A future as bright as brocade'},
+  {text:'飞黄腾达',sub:'Rising to great heights of success'},
+  {text:'马到成功',sub:'Success comes swiftly'},
+  {text:'事事顺心',sub:'Everything goes as you wish'},
+  {text:'天天开心',sub:'Happy every single day'},
+  {text:'称心如意',sub:'Complete satisfaction in all things'},
+  {text:'吉星高照',sub:'Lucky stars shine upon you'},
+  {text:'紫气东来',sub:'Purple clouds from the east (supreme fortune!)'},
+  // More Singlish
+  {text:'Kena Upgrade! ✈️',sub:'You will get unexpected upgrades in life'},
+  {text:'Boss Give Bonus 💰',sub:'Recognition and rewards are coming your way'},
+  {text:'Hawker Auntie Smiley 😊',sub:'Even strangers will be extra kind to you this year'},
+  {text:'ERP Always Green 🟢',sub:'No hidden charges in your life this year'},
+  {text:'BTO First Ballot 🏠',sub:'Your biggest life goals? First try success'},
+  {text:'Grab Got Promo 🎉',sub:'Life keeps giving you pleasant surprises'},
+  {text:'Food Panda Free Delivery 🐼',sub:'Good things come to you without effort'},
+  {text:'Durian Season Extra Sweet 🤤',sub:'The best things in life get even better'},
+  // Motivational
+  {text:'Diamond Hands Only 💎',sub:'Your patience and persistence will pay off BIG'},
+  {text:'Main Character Energy ✨',sub:'This is YOUR year. Own it.'},
+  {text:'Plot Armour Activated 🛡️',sub:'Nothing can stop you this year'},
+  {text:'Atas Year Loading... 👸',sub:'Prepare for a year of luxury and good taste'},
+  {text:'Zero Drama, Maximum Fun 🎭',sub:'Peace + joy = your life formula this year'},
+  {text:'Blessed & Unbothered 😌',sub:'Nothing will ruffle your feathers this year'},
+  // More food
+  {text:'Oyster Omelette Crispy 🥚',sub:'Perfect on the outside, rich on the inside — that\'s you'},
+  {text:'Satay Extra Stick 🍢',sub:'You always get a little more than expected'},
+  {text:'Roti Prata Coin Prata 🫓',sub:'Round, golden, perfect — your fortune this year'},
+  {text:'Bak Kut Teh Peppery 🍖',sub:'Warm, comforting, and deeply nourishing'},
+  {text:'Chendol Extra Gula Melaka 🍧',sub:'Life is about to get deliciously sweet'},
+  {text:'Hokkien Mee Prawn Big Big 🦐',sub:'The good stuff in life comes in generous portions'},
+  // Huat level
+  {text:'MAXIMUM HUAT 🔥🧧🔥',sub:'Your prosperity level this year: OVER 9000'},
+  {text:'Ang Bao Collector Pro 🧧',sub:'Wealth finds its way to you naturally'},
+  {text:'Toto Main Prize Energy 🎯',sub:'Big wins are headed your way'},
+  {text:'Golden Ticket Found! 🎫',sub:'Something incredible is about to happen'},
+  {text:'Fortune Cookie Says YES 🥠',sub:'Whatever you\'re asking — the answer is yes'},
+  {text:'Lucky Cat Waving at You 🐱',sub:'Prosperity is beckoning you closer'},
+  {text:'Red Carpet Year 🏆',sub:'VIP treatment wherever you go'},
+  {text:'Universe Says: Your Turn 🌟',sub:'It\'s finally your time to shine'},
+  // Last few to reach 88
+  {text:'Prosperity Overflow! 💰',sub:'You have too much good fortune — share it around!'},
+  {text:'Wholesome Vibes Only 🌈',sub:'Your energy this year attracts only good things'},
+  {text:'Every Day CNY 🎊',sub:'The celebration never stops for you this year'},
+  {text:'Heng Ong Huat! 🎆',sub:'Prosper! Prosper! PROSPER!'},
+  {text:'Gong Xi Gong Xi! 🏮',sub:'Congratulations — your best year starts NOW'},
+  {text:'Lo Hei Champion 🥗🏆',sub:'You tossed the highest — your blessings are the biggest!'},
+];
+
+// ===== STATE =====
+let grid = [];       // 2D array [row][col] = {type, el, power}
+let selected = null; // {row, col}
+let moves = MAX_MOVES;
+let score = 0;
+let collecting = {};  // {id: {target, current}}
+let animating = false;
+let completedCount = 0;
+
+// ===== SCREENS =====
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goToTitle(){showScreen('titleScreen');}
+
+// ===== INIT COLLECTION METER =====
+function initMeters(){
+  collecting = {};
+  completedCount = 0;
+  INGREDIENTS.forEach(ing => {
+    collecting[ing.id] = {
+      target: 15 + Math.floor(Math.random() * 46), // 15-60
+      current: 0,
+    };
+  });
+  renderMeters();
+}
+
+function renderMeters(){
+  const strip = document.getElementById('meterStrip');
+  strip.innerHTML = '';
+  INGREDIENTS.forEach(ing => {
+    const m = collecting[ing.id];
+    const pct = Math.min(100, (m.current / m.target) * 100);
+    const complete = m.current >= m.target;
+    const el = document.createElement('div');
+    el.className = 'meter-item' + (complete ? ' complete' : '');
+    el.id = 'meter-' + ing.id;
+    el.innerHTML = `
+      <img class="meter-img" src="${IMG}${ing.img}" alt="${ing.name}">
+      <div class="meter-bar"><div class="meter-fill" style="width:${pct}%"></div></div>
+      <div class="meter-check">✅</div>
+    `;
+    strip.appendChild(el);
+  });
+}
+
+function updateMeter(id, count){
+  const m = collecting[id];
+  if(!m) return;
+  const wasComplete = m.current >= m.target;
+  m.current += count;
+  const nowComplete = m.current >= m.target;
+  const pct = Math.min(100, (m.current / m.target) * 100);
+
+  const el = document.getElementById('meter-' + id);
+  if(el){
+    el.querySelector('.meter-fill').style.width = pct + '%';
+    if(nowComplete && !wasComplete){
+      el.classList.add('complete');
+      completedCount++;
+      showBlessing(id);
+    }
+  }
+}
+
+// ===== BLESSING POPUP =====
+function showBlessing(id){
+  const ing = INGREDIENTS.find(i=>i.id===id);
+  if(!ing) return;
+  const popup = document.getElementById('blessingPopup');
+  document.getElementById('blessingEmoji').textContent = '🧧';
+  document.getElementById('blessingText').textContent = ing.blessing;
+  document.getElementById('blessingSub').textContent = ing.blessingEn;
+  popup.classList.remove('hidden');
+  popup.style.animation = 'none';
+  popup.offsetHeight; // reflow
+  popup.style.animation = 'bounceIn .5s cubic-bezier(.34,1.56,.64,1)';
+
+  setTimeout(()=> popup.classList.add('hidden'), 2000);
+
+  // Check win
+  if(completedCount >= INGREDIENTS.length){
+    setTimeout(()=> showFortune(), 2500);
+  }
+}
+
+// ===== GRID =====
+function initGrid(){
+  grid = [];
+  const gridEl = document.getElementById('grid');
+  gridEl.innerHTML = '';
+
+  for(let r=0;r<ROWS;r++){
+    grid[r] = [];
+    for(let c=0;c<COLS;c++){
+      let type;
+      // Avoid initial matches
+      do {
+        type = GRID_TYPES[Math.floor(Math.random()*GRID_TYPES.length)];
+      } while(
+        (c >= 2 && grid[r][c-1]?.type?.id === type.id && grid[r][c-2]?.type?.id === type.id) ||
+        (r >= 2 && grid[r-1]?.[c]?.type?.id === type.id && grid[r-2]?.[c]?.type?.id === type.id)
+      );
+
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.innerHTML = `<img src="${IMG}${type.img}" alt="${type.name}">`;
+      cell.addEventListener('click', ()=> onCellClick(r,c));
+      cell.addEventListener('touchstart', (e)=>{e.preventDefault(); onCellClick(r,c);}, {passive:false});
+      gridEl.appendChild(cell);
+
+      grid[r][c] = {type, el: cell, power: null};
+    }
+  }
+}
+
+function onCellClick(r,c){
+  if(animating) return;
+  if(!grid[r][c].type) return;
+
+  if(!selected){
+    selected = {row:r, col:c};
+    grid[r][c].el.classList.add('selected');
+    return;
+  }
+
+  // Check adjacency
+  const dr = Math.abs(selected.row - r);
+  const dc = Math.abs(selected.col - c);
+  grid[selected.row][selected.col].el.classList.remove('selected');
+
+  if((dr === 1 && dc === 0) || (dr === 0 && dc === 1)){
+    // Swap
+    trySwap(selected.row, selected.col, r, c);
+  } else {
+    // Select new cell
+    selected = {row:r, col:c};
+    grid[r][c].el.classList.add('selected');
+    return;
+  }
+  selected = null;
+}
+
+async function trySwap(r1,c1,r2,c2){
+  animating = true;
+
+  // Swap in data
+  swap(r1,c1,r2,c2);
+  renderGrid();
+
+  // Check matches
+  const matches = findMatches();
+  if(matches.length === 0){
+    // Swap back
+    await sleep(200);
+    swap(r1,c1,r2,c2);
+    renderGrid();
+    animating = false;
+    return;
+  }
+
+  // Valid move — use a move
+  moves--;
+  document.getElementById('hudMoves').textContent = `Moves: ${moves}`;
+
+  // Process matches cascade
+  await processMatches();
+
+  animating = false;
+
+  // Check lose
+  if(moves <= 0 && completedCount < INGREDIENTS.length){
+    setTimeout(()=> gameOver(), 500);
+  }
+}
+
+function swap(r1,c1,r2,c2){
+  const temp = grid[r1][c1];
+  grid[r1][c1] = grid[r2][c2];
+  grid[r2][c2] = temp;
+}
+
+function renderGrid(){
+  const gridEl = document.getElementById('grid');
+  gridEl.innerHTML = '';
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      if(grid[r][c].type){
+        cell.innerHTML = `<img src="${IMG}${grid[r][c].type.img}" alt="${grid[r][c].type.name}">`;
+        if(grid[r][c].power === 'row'){
+          cell.classList.add('power');
+          cell.innerHTML += '<span class="power-icon">🫘</span>';
+        } else if(grid[r][c].power === 'bomb'){
+          cell.classList.add('power');
+          cell.innerHTML += '<span class="power-icon">💥</span>';
+        }
+      }
+      cell.addEventListener('click', ()=> onCellClick(r,c));
+      cell.addEventListener('touchstart', (e)=>{e.preventDefault(); onCellClick(r,c);}, {passive:false});
+      gridEl.appendChild(cell);
+      grid[r][c].el = cell;
+    }
+  }
+}
+
+// ===== MATCH FINDING =====
+function findMatches(){
+  const matched = new Set();
+
+  // Horizontal
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<=COLS-3;c++){
+      if(grid[r][c].type && grid[r][c+1].type && grid[r][c+2].type){
+        if(grid[r][c].type.id === grid[r][c+1].type.id && grid[r][c+1].type.id === grid[r][c+2].type.id){
+          matched.add(`${r},${c}`);
+          matched.add(`${r},${c+1}`);
+          matched.add(`${r},${c+2}`);
+        }
+      }
+    }
+  }
+
+  // Vertical
+  for(let r=0;r<=ROWS-3;r++){
+    for(let c=0;c<COLS;c++){
+      if(grid[r][c].type && grid[r+1][c].type && grid[r+2][c].type){
+        if(grid[r][c].type.id === grid[r+1][c].type.id && grid[r+1][c].type.id === grid[r+2][c].type.id){
+          matched.add(`${r},${c}`);
+          matched.add(`${r+1},${c}`);
+          matched.add(`${r+2},${c}`);
+        }
+      }
+    }
+  }
+
+  return [...matched].map(s => {
+    const [r,c] = s.split(',').map(Number);
+    return {row:r, col:c};
+  });
+}
+
+// ===== MATCH GROUPING (for power-ups) =====
+function groupMatches(matches){
+  // Group by type and adjacency
+  const groups = [];
+  const visited = new Set();
+
+  matches.forEach(m => {
+    const key = `${m.row},${m.col}`;
+    if(visited.has(key)) return;
+
+    const type = grid[m.row][m.col].type;
+    if(!type) return;
+
+    const group = [];
+    const queue = [m];
+    while(queue.length){
+      const cur = queue.shift();
+      const k = `${cur.row},${cur.col}`;
+      if(visited.has(k)) continue;
+      if(!grid[cur.row]?.[cur.col]?.type) continue;
+      if(grid[cur.row][cur.col].type.id !== type.id) continue;
+      if(!matches.find(x=>x.row===cur.row && x.col===cur.col)) continue;
+
+      visited.add(k);
+      group.push(cur);
+
+      // Check neighbors
+      [{row:cur.row-1,col:cur.col},{row:cur.row+1,col:cur.col},
+       {row:cur.row,col:cur.col-1},{row:cur.row,col:cur.col+1}].forEach(n=>{
+        if(n.row>=0 && n.row<ROWS && n.col>=0 && n.col<COLS) queue.push(n);
+      });
+    }
+    if(group.length) groups.push({type, cells:group});
+  });
+  return groups;
+}
+
+// ===== PROCESS MATCHES =====
+async function processMatches(){
+  let matches = findMatches();
+  while(matches.length > 0){
+    const groups = groupMatches(matches);
+
+    // Check for power-ups
+    groups.forEach(group => {
+      if(group.cells.length === 5){
+        // Match 5 = Golden Cracker Bomb
+        const center = group.cells[2];
+        grid[center.row][center.col].power = 'bomb';
+      } else if(group.cells.length === 4){
+        // Match 4 = Plum Sauce Splash (row clear)
+        const center = group.cells[1];
+        grid[center.row][center.col].power = 'row';
+      }
+    });
+
+    // Animate matches
+    matches.forEach(m => {
+      if(grid[m.row][m.col].el) grid[m.row][m.col].el.classList.add('matched');
+    });
+
+    await sleep(350);
+
+    // Collect + remove
+    const collected = {};
+    matches.forEach(m => {
+      const cell = grid[m.row][m.col];
+      if(cell.type){
+        const id = cell.type.id;
+        collected[id] = (collected[id]||0) + 1;
+
+        // Check if power-up should activate
+        if(cell.power === 'row'){
+          // Clear entire row
+          for(let c=0;c<COLS;c++){
+            if(grid[m.row][c].type){
+              const rid = grid[m.row][c].type.id;
+              collected[rid] = (collected[rid]||0) + 1;
+              grid[m.row][c].type = null;
+            }
+          }
+          score += 50;
+        } else if(cell.power === 'bomb'){
+          // Clear 3x3 area
+          for(let dr=-1;dr<=1;dr++){
+            for(let dc=-1;dc<=1;dc++){
+              const nr=m.row+dr, nc=m.col+dc;
+              if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&grid[nr][nc].type){
+                const bid = grid[nr][nc].type.id;
+                collected[bid] = (collected[bid]||0) + 1;
+                grid[nr][nc].type = null;
+              }
+            }
+          }
+          score += 100;
+        }
+
+        cell.type = null;
+        cell.power = null;
+      }
+    });
+
+    // Update meters
+    Object.entries(collected).forEach(([id, count]) => {
+      updateMeter(id, count);
+      score += count * 10;
+    });
+    document.getElementById('hudScore').textContent = `Score: ${score}`;
+
+    // Gravity — drop tiles down
+    for(let c=0;c<COLS;c++){
+      let empty = ROWS-1;
+      for(let r=ROWS-1;r>=0;r--){
+        if(grid[r][c].type){
+          if(r !== empty){
+            grid[empty][c].type = grid[r][c].type;
+            grid[empty][c].power = grid[r][c].power;
+            grid[r][c].type = null;
+            grid[r][c].power = null;
+          }
+          empty--;
+        }
+      }
+      // Fill empty top cells
+      for(let r=empty;r>=0;r--){
+        grid[r][c].type = GRID_TYPES[Math.floor(Math.random()*GRID_TYPES.length)];
+        grid[r][c].power = null;
+      }
+    }
+
+    renderGrid();
+    await sleep(300);
+
+    // Check for new matches (cascade)
+    matches = findMatches();
+  }
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ===== GAME OVER =====
+function gameOver(){
+  document.getElementById('gameOverText').textContent =
+    `You collected ${completedCount}/${INGREDIENTS.length} ingredients. So close!`;
+  showScreen('gameOverScreen');
+}
+
+// ===== FORTUNE =====
+function showFortune(){
+  showScreen('fortuneScreen');
+  document.getElementById('fortuneBall').classList.remove('shaking','revealed');
+  document.getElementById('fortuneResult').classList.add('hidden');
+  document.getElementById('fortuneButtons').classList.add('hidden');
+  document.getElementById('fortuneBall').querySelector('span').textContent = 'Tap to reveal your fortune';
+}
+
+function revealFortune(){
+  const ball = document.getElementById('fortuneBall');
+  if(ball.classList.contains('revealed')) return;
+
+  ball.classList.add('shaking');
+
+  setTimeout(()=>{
+    ball.classList.remove('shaking');
+    ball.classList.add('revealed');
+
+    const fortune = FORTUNES[Math.floor(Math.random()*FORTUNES.length)];
+    ball.querySelector('span').textContent = '🧧';
+
+    document.getElementById('fortuneText').textContent = fortune.text;
+    document.getElementById('fortuneSub').textContent = fortune.sub;
+    document.getElementById('fortuneResult').classList.remove('hidden');
+    document.getElementById('fortuneButtons').classList.remove('hidden');
+  }, 1200);
+}
+
+// ===== START =====
+function startGame(){
+  moves = MAX_MOVES;
+  score = 0;
+  selected = null;
+  animating = false;
+  document.getElementById('hudMoves').textContent = `Moves: ${moves}`;
+  document.getElementById('hudScore').textContent = `Score: 0`;
+  initMeters();
+  initGrid();
+  showScreen('gameScreen');
+}
+
+</script>
+</body>
+</html>

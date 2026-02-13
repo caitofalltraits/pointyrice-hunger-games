@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Hotpot: Order Up! | PointyRice Hunger Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poetsen+One&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;min-height:100dvh;overflow-x:hidden;
+  font-family:'Barlow',sans-serif;
+  background:#faf9e1;color:#2b2b2b;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ===== BACK BUTTON ===== */
+.back-home{
+  position:fixed;top:12px;left:12px;z-index:1000;
+  width:40px;height:40px;border-radius:50%;
+  background:#910f3f;color:#fff;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;font-weight:700;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+
+/* ===== SCREENS ===== */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:20px;text-align:center;}
+.screen.active{display:flex;}
+
+/* ===== TITLE SCREEN ===== */
+#titleScreen{background:linear-gradient(180deg,#faf9e1 0%,#ffecd2 100%);}
+.title-stove{width:120px;height:120px;object-fit:contain;animation:flame 1s ease-in-out infinite alternate;}
+.title-pot{width:180px;height:180px;object-fit:contain;margin-top:-30px;animation:potBubble 2s ease-in-out infinite;}
+h1{font-family:'Poetsen One',cursive;font-size:2rem;color:#3d081b;margin:12px 0 4px;}
+.subtitle{font-size:1rem;color:#666;margin-bottom:20px;}
+.level-preview{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:16px 0;}
+.level-dot{width:36px;height:36px;border-radius:50%;background:#ebebec;display:flex;align-items:center;justify-content:center;font-family:'Poetsen One',cursive;font-size:.85rem;color:#999;transition:.3s;}
+.level-dot.cleared{background:#78b29b;color:#fff;}
+.level-dot.current{background:#f8b401;color:#fff;transform:scale(1.15);}
+
+/* ===== BUTTONS ===== */
+.btn{
+  display:inline-block;padding:14px 32px;border-radius:12px;border:none;
+  font-family:'Poetsen One',cursive;font-size:1.1rem;cursor:pointer;
+  transition:transform .15s,background .2s;min-height:44px;
+}
+.btn:active{transform:scale(.95);}
+.btn-primary{background:#f4894e;color:#fff;}
+.btn-primary:hover{background:#e57a3f;}
+.btn-accent{background:#f8b401;color:#fff;}
+.btn-secondary{background:#ebebec;color:#2b2b2b;}
+
+/* ===== GAME SCREEN ===== */
+#gameScreen{padding:0;justify-content:flex-start;min-height:100dvh;}
+.game-hud{
+  width:100%;max-width:500px;padding:10px 16px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Poetsen One',cursive;font-size:.9rem;
+}
+.hud-level{color:#910f3f;}
+.hud-score{color:#3d081b;}
+.hud-timer{color:#bb492b;font-size:1.1rem;}
+
+/* ===== POT AREA ===== */
+.pot-area{
+  position:relative;width:100%;max-width:500px;
+  aspect-ratio:4/3;margin:0 auto;
+}
+.pot-bg{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:75%;height:auto;z-index:2;pointer-events:none;
+}
+.stove-bg{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:85%;height:auto;z-index:1;pointer-events:none;
+}
+/* Overflow meter */
+.overflow-wrap{
+  position:absolute;right:8px;top:10px;bottom:60px;width:32px;
+  background:#ebebec;border-radius:16px;overflow:hidden;z-index:10;
+  border:2px solid #ddd;
+}
+.overflow-fill{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(180deg,#ff4444,#f8b401);
+  border-radius:0 0 14px 14px;transition:height .4s cubic-bezier(.34,1.56,.64,1);
+}
+.overflow-label{
+  position:absolute;top:-22px;right:0;width:32px;text-align:center;
+  font-size:.6rem;font-family:'Poetsen One',cursive;color:#bb492b;
+}
+/* Soup bubbles */
+.bubble{
+  position:absolute;width:12px;height:12px;border-radius:50%;
+  background:rgba(255,255,255,.5);z-index:3;
+  animation:rise 1.5s ease-in infinite;
+}
+@keyframes rise{
+  0%{opacity:.7;transform:translateY(0) scale(1);}
+  100%{opacity:0;transform:translateY(-60px) scale(.3);}
+}
+
+/* ===== DROP ZONE ===== */
+.drop-zone{
+  position:absolute;left:15%;right:15%;top:20%;bottom:25%;
+  z-index:5;border-radius:50%;
+}
+.drop-zone.drag-over{
+  background:rgba(120,178,155,.15);
+  border:3px dashed #78b29b;
+}
+
+/* ===== CUSTOMER ===== */
+.customer-area{
+  width:100%;max-width:500px;padding:8px 16px;min-height:100px;
+  display:flex;align-items:center;gap:12px;
+}
+.customer-avatar{
+  width:60px;height:60px;border-radius:50%;
+  background:#f3aecb;display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;flex-shrink:0;
+  animation:customerBounce .5s cubic-bezier(.34,1.56,.64,1);
+}
+.order-bubble{
+  flex:1;background:#fff;border-radius:16px;padding:10px 14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);position:relative;
+  animation:bubblePop .4s cubic-bezier(.34,1.56,.64,1);
+}
+.order-bubble::before{
+  content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);
+  border:8px solid transparent;border-right-color:#fff;
+}
+.order-label{font-size:.7rem;color:#999;margin-bottom:6px;font-weight:600;}
+.order-items{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.order-item{
+  width:48px;height:48px;object-fit:contain;
+  border-radius:8px;background:#faf9e1;padding:4px;
+  border:2px solid #ebebec;
+}
+.order-item.filled{border-color:#78b29b;background:#e8f5e9;}
+.order-item.wrong{border-color:#ff4444;background:#ffebee;animation:shake .4s;}
+
+/* ===== INGREDIENT SHELF ===== */
+.shelf{
+  width:100%;max-width:500px;padding:8px 12px;
+  overflow-x:auto;overflow-y:hidden;
+  display:flex;gap:8px;align-items:center;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x;
+}
+.shelf-item{
+  flex-shrink:0;width:64px;height:64px;
+  border-radius:12px;background:#fff;padding:6px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  cursor:grab;user-select:none;
+  transition:transform .15s;
+  touch-action:none;
+}
+.shelf-item:active{transform:scale(.9);cursor:grabbing;}
+.shelf-item img{width:100%;height:100%;object-fit:contain;pointer-events:none;}
+
+/* Serve button */
+.serve-btn-wrap{
+  width:100%;max-width:500px;padding:8px 16px;
+  display:flex;justify-content:center;
+}
+.btn-serve{
+  padding:10px 40px;border-radius:12px;border:none;
+  font-family:'Poetsen One',cursive;font-size:1rem;
+  background:#78b29b;color:#fff;cursor:pointer;
+  transition:transform .15s,background .2s;opacity:.4;pointer-events:none;
+}
+.btn-serve.ready{opacity:1;pointer-events:auto;background:#4a8a70;animation:pulse 1s infinite;}
+
+/* ===== FLOATING INGREDIENT (during drag) ===== */
+.floating-ingredient{
+  position:fixed;width:60px;height:60px;
+  pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.3));
+}
+.floating-ingredient img{width:100%;height:100%;object-fit:contain;}
+
+/* ===== LEVEL COMPLETE ===== */
+.level-msg{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.5);display:none;
+  align-items:center;justify-content:center;
+}
+.level-msg.active{display:flex;}
+.level-card{
+  background:#fff;border-radius:20px;padding:30px;text-align:center;
+  max-width:320px;width:90%;
+  animation:bounceIn .5s cubic-bezier(.34,1.56,.64,1);
+}
+.level-card h2{font-family:'Poetsen One',cursive;color:#3d081b;font-size:1.5rem;margin-bottom:8px;}
+.level-card p{color:#666;margin-bottom:16px;}
+.stars{font-size:2rem;margin:8px 0;}
+
+/* ===== GAME OVER ===== */
+#gameOverScreen{background:linear-gradient(180deg,#ffcccc,#faf9e1);}
+.overflow-splash{font-size:4rem;margin-bottom:8px;}
+
+/* ===== WIN SCREEN ===== */
+#winScreen{background:linear-gradient(180deg,#e8f5e9,#faf9e1);}
+
+/* ===== ANIMATIONS ===== */
+@keyframes flame{0%{transform:scale(1) rotate(-2deg);}100%{transform:scale(1.05) rotate(2deg);}}
+@keyframes potBubble{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+@keyframes bubblePop{0%{transform:scale(0);}100%{transform:scale(1);}}
+@keyframes customerBounce{0%{transform:scale(0) rotate(-10deg);}100%{transform:scale(1) rotate(0);}}
+@keyframes bounceIn{0%{transform:scale(0);opacity:0;}100%{transform:scale(1);opacity:1;}}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+@keyframes sizzle{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-30px) scale(.5);}}
+
+/* ===== INGREDIENT LANDING IN POT ===== */
+.pot-ingredient{
+  position:absolute;z-index:4;
+  width:50px;height:50px;object-fit:contain;
+  animation:ingredientDrop .4s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+}
+@keyframes ingredientDrop{0%{transform:scale(1.5);opacity:0;}100%{transform:scale(1);opacity:1;}}
+
+/* ===== TIMER BAR ===== */
+.timer-bar{
+  width:100%;max-width:500px;height:6px;background:#ebebec;border-radius:3px;overflow:hidden;
+}
+.timer-fill{
+  height:100%;background:#f8b401;border-radius:3px;
+  transition:width .1s linear;
+}
+.timer-fill.urgent{background:#ff4444;}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:400px){
+  h1{font-size:1.6rem;}
+  .shelf-item{width:56px;height:56px;}
+  .order-item{width:40px;height:40px;}
+}
+</style>
+</head>
+<body>
+<a href="../" class="back-home" aria-label="Back to menu">←</a>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="titleScreen" class="screen active">
+  <img src="img/00_stovewithfire.png" class="title-stove" alt="Stove">
+  <img src="img/01_potwithsoup.png" class="title-pot" alt="Hotpot">
+  <h1>🍲 Order Up!</h1>
+  <p class="subtitle">Serve customers their hotpot orders!</p>
+  <div class="level-preview" id="levelDots"></div>
+  <p style="font-size:.85rem;color:#888;margin:8px 0 20px;">Drag the right ingredients into the pot.<br>Don't let it overflow!</p>
+  <button class="btn btn-primary" onclick="startGame()">Let's Cook!</button>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="gameScreen" class="screen">
+  <div class="game-hud">
+    <span class="hud-level" id="hudLevel">Level 1</span>
+    <span class="hud-timer" id="hudTimer">⏱ 30s</span>
+    <span class="hud-score" id="hudScore">Score: 0</span>
+  </div>
+  <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+  <div class="customer-area" id="customerArea"></div>
+  <div class="pot-area" id="potArea">
+    <img src="img/00_stovewithfire.png" class="stove-bg" alt="">
+    <img src="img/01_potwithsoup.png" class="pot-bg" alt="">
+    <div class="drop-zone" id="dropZone"></div>
+    <div class="overflow-wrap">
+      <div class="overflow-label">🔥</div>
+      <div class="overflow-fill" id="overflowFill" style="height:0%"></div>
+    </div>
+  </div>
+  <div class="serve-btn-wrap">
+    <button class="btn-serve" id="serveBtn" onclick="serveOrder()">🍜 Serve!</button>
+  </div>
+  <div class="shelf" id="shelf"></div>
+</div>
+
+<!-- ===== LEVEL COMPLETE OVERLAY ===== -->
+<div class="level-msg" id="levelMsg">
+  <div class="level-card">
+    <div class="stars" id="levelStars"></div>
+    <h2 id="levelTitle">Level Complete!</h2>
+    <p id="levelText"></p>
+    <button class="btn btn-primary" id="levelBtn" onclick="nextLevel()">Next Level →</button>
+  </div>
+</div>
+
+<!-- ===== GAME OVER ===== -->
+<div id="gameOverScreen" class="screen">
+  <div class="overflow-splash">🫠🍲💥</div>
+  <h1>Overflow!</h1>
+  <p class="subtitle" id="gameOverText">The pot overflowed! You served 0 customers.</p>
+  <div style="display:flex;gap:12px;margin-top:20px;">
+    <button class="btn btn-secondary" onclick="restartLevel()">Try Again</button>
+    <button class="btn btn-primary" onclick="goToTitle()">Menu</button>
+  </div>
+</div>
+
+<!-- ===== WIN SCREEN ===== -->
+<div id="winScreen" class="screen">
+  <div style="font-size:4rem;margin-bottom:8px;">🏆🍲🎉</div>
+  <h1>Hotpot Master!</h1>
+  <p class="subtitle">You survived the Dinner Rush!</p>
+  <p id="winScore" style="font-family:'Poetsen One',cursive;font-size:1.3rem;color:#910f3f;margin:12px 0;"></p>
+  <p style="font-size:.85rem;color:#666;margin-bottom:20px;">Now you know all 19 hotpot ingredients 😏<br>Want them as stickers?</p>
+  <button class="btn btn-accent" onclick="window.open('https://www.pointyrice.com','_blank')">🛒 Get the Sticker Pack!</button>
+  <button class="btn btn-secondary" style="margin-top:12px;" onclick="goToTitle()">Play Again</button>
+</div>
+
+<script>
+/* ========================================================
+   HOTPOT: ORDER UP!
+   PointyRice Hunger Games — Level-based serving game
+   ======================================================== */
+
+const IMG = 'img/';
+
+// ===== INGREDIENT DATABASE =====
+const ALL_INGREDIENTS = [
+  {id:'noodles',      name:'Maggi Noodles',  img:'09_noodles.png'},
+  {id:'konjac',       name:'Konjac Noodles', img:'10_konjacnoodles.png'},
+  {id:'bokchoy',      name:'Bok Choy',       img:'02_bokchoy2.png'},
+  {id:'tangoh',       name:'Tang Oh',        img:'20_tangoh.png'},
+  {id:'cabbage',      name:'Cabbage',        img:'16_cabbage.png'},
+  {id:'enoki',        name:'Enoki',          img:'03_enoki.png'},
+  {id:'shimeji',      name:'Shimeji',        img:'04_shimeji.png'},
+  {id:'shiitake',     name:'Shiitake',       img:'05_shiitake.png'},
+  {id:'blackfungus',  name:'Black Fungus',   img:'17_blackfungus.png'},
+  {id:'fishballs',    name:'Fishballs',      img:'06_fishballs3x.png'},
+  {id:'sotongball',   name:'Sotong Ball',    img:'13_sotongball.png'},
+  {id:'luncheon',     name:'Luncheon Meat',  img:'18_luncheoncut.png'},
+  {id:'treasurepkt',  name:'Treasure Pkt',   img:'14_treasurepkt.png'},
+  {id:'fish',         name:'Fish',           img:'11_fish.png'},
+  {id:'fishmaw',      name:'Fish Maw',       img:'15_fishmaw.png'},
+  {id:'meat',         name:'Meat',           img:'08_ meat2.png'},
+  {id:'tofu',         name:'Tofu',           img:'07_tofu3.png'},
+  {id:'fishpastetofu',name:'Fish Paste Tofu',img:'12_fishpastetofu.png'},
+  {id:'yamsticks',    name:'Yam Sticks',     img:'19_yamsticks.png'},
+];
+
+// ===== LEVEL DEFINITIONS =====
+const LEVELS = [
+  {
+    name:'Noodle Warmup',
+    emoji:'🍜',
+    ingredients:['noodles','konjac'],
+    orderSize:[1,1],    // min,max items per order
+    timePerOrder:8,     // seconds per customer
+    customersNeeded:5,
+    encouragement:'Easy peasy! Just two noodles 🍜',
+    clearMsg:'Wah, you know your noodles! Ready for veggies?',
+  },
+  {
+    name:'Veggie Time',
+    emoji:'🥬',
+    ingredients:['bokchoy','tangoh','cabbage'],
+    orderSize:[1,2],
+    timePerOrder:7,
+    customersNeeded:6,
+    encouragement:'3 veggies — can you tell them apart?',
+    clearMsg:'Not bad ah! Mushrooms next... they all look the same 😈',
+  },
+  {
+    name:'Mushroom Madness',
+    emoji:'🍄',
+    ingredients:['enoki','shimeji','shiitake','blackfungus'],
+    orderSize:[1,2],
+    timePerOrder:6,
+    customersNeeded:7,
+    encouragement:'4 mushrooms — look carefully!',
+    clearMsg:'Wah you can tell your mushrooms apart! Respect 🍄',
+  },
+  {
+    name:'Premium Platter',
+    emoji:'🥩',
+    ingredients:['fishballs','sotongball','luncheon','treasurepkt','fish','fishmaw','meat','tofu','fishpastetofu','yamsticks'],
+    orderSize:[2,3],
+    timePerOrder:7,
+    customersNeeded:8,
+    encouragement:'10 items — the real challenge begins!',
+    clearMsg:'Premium ingredients? No problem for you! One more level...',
+  },
+  {
+    name:'BOSS: Dinner Rush',
+    emoji:'🔥',
+    ingredients: ALL_INGREDIENTS.map(i=>i.id),
+    orderSize:[2,4],
+    timePerOrder:6,
+    customersNeeded:10,
+    encouragement:'ALL 19 ingredients. Multiple orders. DON\'T OVERFLOW! 🫠',
+    clearMsg:'YOU ARE THE HOTPOT MASTER!! 🏆🍲',
+  },
+];
+
+// ===== CUSTOMER EMOJIS =====
+const CUSTOMERS = ['👩','👨','👧','👦','👵','👴','🧑','👩‍🦱','👨‍🦳','🧒','👩‍🍳','🧓'];
+
+// ===== GAME STATE =====
+let state = {
+  currentLevel:0,
+  score:0,
+  totalScore:0,
+  overflowLevel:0,      // 0-100
+  potIngredients:[],     // ids of what's in the pot
+  currentOrder:null,     // {items:[ids], filled:[bools]}
+  customersServed:0,
+  timerSeconds:0,
+  timerInterval:null,
+  highestCleared:-1,
+  isDragging:false,
+  dragItem:null,
+  floatingEl:null,
+};
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== TITLE SCREEN =====
+function renderLevelDots(){
+  const c = document.getElementById('levelDots');
+  c.innerHTML = '';
+  LEVELS.forEach((lv,i)=>{
+    const d = document.createElement('div');
+    d.className = 'level-dot';
+    if(i <= state.highestCleared) d.classList.add('cleared');
+    if(i === state.currentLevel) d.classList.add('current');
+    d.textContent = i+1;
+    c.appendChild(d);
+  });
+}
+
+function goToTitle(){
+  clearInterval(state.timerInterval);
+  showScreen('titleScreen');
+  renderLevelDots();
+}
+
+// ===== START GAME =====
+function startGame(){
+  state.currentLevel = Math.min(state.highestCleared + 1, LEVELS.length - 1);
+  startLevel();
+}
+
+function startLevel(){
+  const lv = LEVELS[state.currentLevel];
+  state.score = 0;
+  state.overflowLevel = 0;
+  state.potIngredients = [];
+  state.customersServed = 0;
+  state.currentOrder = null;
+
+  showScreen('gameScreen');
+  document.getElementById('hudLevel').textContent = `Lv${state.currentLevel+1}: ${lv.name}`;
+  document.getElementById('hudScore').textContent = `Served: 0/${lv.customersNeeded}`;
+  updateOverflow();
+  clearPotVisuals();
+  renderShelf();
+  spawnCustomer();
+}
+
+function restartLevel(){
+  startLevel();
+}
+
+// ===== SHELF =====
+function renderShelf(){
+  const shelf = document.getElementById('shelf');
+  shelf.innerHTML = '';
+  const lv = LEVELS[state.currentLevel];
+  const ingredients = lv.ingredients.map(id => ALL_INGREDIENTS.find(i=>i.id===id));
+
+  ingredients.forEach(ing => {
+    const el = document.createElement('div');
+    el.className = 'shelf-item';
+    el.dataset.id = ing.id;
+    el.innerHTML = `<img src="${IMG}${ing.img}" alt="${ing.name}" draggable="false">`;
+
+    // Touch events
+    el.addEventListener('touchstart', onDragStart, {passive:false});
+    el.addEventListener('mousedown', onDragStart);
+    shelf.appendChild(el);
+  });
+}
+
+// ===== DRAG & DROP =====
+function onDragStart(e){
+  e.preventDefault();
+  const shelfItem = e.currentTarget;
+  const id = shelfItem.dataset.id;
+  const ing = ALL_INGREDIENTS.find(i=>i.id===id);
+
+  state.isDragging = true;
+  state.dragItem = ing;
+
+  // Create floating element
+  const fl = document.createElement('div');
+  fl.className = 'floating-ingredient';
+  fl.innerHTML = `<img src="${IMG}${ing.img}" alt="">`;
+  document.body.appendChild(fl);
+  state.floatingEl = fl;
+
+  const pos = e.touches ? e.touches[0] : e;
+  fl.style.left = pos.clientX + 'px';
+  fl.style.top = pos.clientY + 'px';
+
+  document.addEventListener('touchmove', onDragMove, {passive:false});
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('touchend', onDragEnd);
+  document.addEventListener('mouseup', onDragEnd);
+}
+
+function onDragMove(e){
+  if(!state.isDragging) return;
+  e.preventDefault();
+  const pos = e.touches ? e.touches[0] : e;
+  state.floatingEl.style.left = pos.clientX + 'px';
+  state.floatingEl.style.top = pos.clientY + 'px';
+
+  // Check if over drop zone
+  const dz = document.getElementById('dropZone');
+  const rect = dz.getBoundingClientRect();
+  const x = pos.clientX, y = pos.clientY;
+  if(x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom){
+    dz.classList.add('drag-over');
+  } else {
+    dz.classList.remove('drag-over');
+  }
+}
+
+function onDragEnd(e){
+  if(!state.isDragging) return;
+  state.isDragging = false;
+
+  document.removeEventListener('touchmove', onDragMove);
+  document.removeEventListener('mousemove', onDragMove);
+  document.removeEventListener('touchend', onDragEnd);
+  document.removeEventListener('mouseup', onDragEnd);
+
+  const dz = document.getElementById('dropZone');
+  dz.classList.remove('drag-over');
+
+  // Check if dropped on pot
+  const pos = e.changedTouches ? e.changedTouches[0] : e;
+  const rect = dz.getBoundingClientRect();
+  const x = pos.clientX, y = pos.clientY;
+  const droppedOnPot = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+
+  if(state.floatingEl){
+    state.floatingEl.remove();
+    state.floatingEl = null;
+  }
+
+  if(droppedOnPot && state.dragItem && state.currentOrder){
+    addToPot(state.dragItem);
+  }
+  state.dragItem = null;
+}
+
+// ===== POT MECHANICS =====
+function addToPot(ing){
+  state.potIngredients.push(ing.id);
+
+  // Check if it's in the order
+  const order = state.currentOrder;
+  const idx = order.items.findIndex((id,i) => id === ing.id && !order.filled[i]);
+
+  if(idx >= 0){
+    // Correct ingredient!
+    order.filled[idx] = true;
+    state.overflowLevel += 3; // small increase for correct
+    highlightOrderItem(idx, true);
+    addPotVisual(ing);
+  } else {
+    // Wrong ingredient!
+    state.overflowLevel += 8; // bigger penalty for wrong
+    showWrongFeedback(ing);
+    addPotVisual(ing);
+  }
+
+  updateOverflow();
+  checkServeReady();
+
+  if(state.overflowLevel >= 100){
+    gameOver();
+  }
+}
+
+function addPotVisual(ing){
+  const area = document.getElementById('potArea');
+  const el = document.createElement('img');
+  el.className = 'pot-ingredient';
+  el.src = IMG + ing.img;
+  // Random position in pot area
+  el.style.left = (30 + Math.random()*40) + '%';
+  el.style.top = (25 + Math.random()*30) + '%';
+  el.style.width = (35 + Math.random()*20) + 'px';
+  el.style.transform = `rotate(${Math.random()*40-20}deg)`;
+  area.appendChild(el);
+}
+
+function clearPotVisuals(){
+  document.querySelectorAll('.pot-ingredient').forEach(el=>el.remove());
+  document.querySelectorAll('.bubble').forEach(el=>el.remove());
+}
+
+function highlightOrderItem(idx, correct){
+  const items = document.querySelectorAll('.order-item');
+  if(items[idx]){
+    items[idx].classList.add(correct ? 'filled' : 'wrong');
+  }
+}
+
+function showWrongFeedback(ing){
+  // Flash the order bubble red briefly
+  const bubble = document.querySelector('.order-bubble');
+  if(bubble){
+    bubble.style.background = '#fff0f0';
+    setTimeout(()=> bubble.style.background = '#fff', 300);
+  }
+}
+
+function updateOverflow(){
+  const fill = document.getElementById('overflowFill');
+  fill.style.height = Math.min(state.overflowLevel, 100) + '%';
+  // Color warning
+  if(state.overflowLevel > 70){
+    fill.style.background = 'linear-gradient(180deg,#ff0000,#ff4444)';
+  } else if(state.overflowLevel > 40){
+    fill.style.background = 'linear-gradient(180deg,#ff4444,#f8b401)';
+  } else {
+    fill.style.background = 'linear-gradient(180deg,#f8b401,#78b29b)';
+  }
+
+  // Add bubbles based on level
+  addBubbles();
+}
+
+function addBubbles(){
+  // Remove old bubbles
+  document.querySelectorAll('.bubble').forEach(el=>el.remove());
+  const area = document.getElementById('potArea');
+  const count = Math.floor(state.overflowLevel / 15) + 1;
+  for(let i=0;i<count;i++){
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.style.left = (25 + Math.random()*50) + '%';
+    b.style.bottom = (25 + Math.random()*15) + '%';
+    b.style.animationDelay = (Math.random()*1.5) + 's';
+    b.style.width = (6+Math.random()*10) + 'px';
+    b.style.height = b.style.width;
+    area.appendChild(b);
+  }
+}
+
+// ===== SERVE =====
+function checkServeReady(){
+  const btn = document.getElementById('serveBtn');
+  if(!state.currentOrder) {btn.classList.remove('ready'); return;}
+  const allFilled = state.currentOrder.filled.every(f=>f);
+  if(allFilled){
+    btn.classList.add('ready');
+  } else {
+    btn.classList.remove('ready');
+  }
+}
+
+function serveOrder(){
+  if(!state.currentOrder) return;
+  if(!state.currentOrder.filled.every(f=>f)) return;
+
+  state.customersServed++;
+  state.score++;
+  state.totalScore++;
+
+  // Reduce overflow slightly on successful serve
+  state.overflowLevel = Math.max(0, state.overflowLevel - 5);
+  updateOverflow();
+
+  // Clear pot visuals partially
+  const potIngs = document.querySelectorAll('.pot-ingredient');
+  potIngs.forEach(el=>el.remove());
+  state.potIngredients = [];
+
+  const lv = LEVELS[state.currentLevel];
+  document.getElementById('hudScore').textContent = `Served: ${state.customersServed}/${lv.customersNeeded}`;
+
+  if(state.customersServed >= lv.customersNeeded){
+    levelComplete();
+  } else {
+    spawnCustomer();
+  }
+}
+
+// ===== CUSTOMER =====
+function spawnCustomer(){
+  const lv = LEVELS[state.currentLevel];
+  const area = document.getElementById('customerArea');
+
+  // Pick random customer emoji
+  const emoji = CUSTOMERS[Math.floor(Math.random()*CUSTOMERS.length)];
+
+  // Generate order
+  const orderSize = lv.orderSize[0] + Math.floor(Math.random() * (lv.orderSize[1] - lv.orderSize[0] + 1));
+  const available = [...lv.ingredients];
+  const orderItems = [];
+  for(let i=0;i<orderSize;i++){
+    const pick = available[Math.floor(Math.random()*available.length)];
+    orderItems.push(pick);
+  }
+
+  state.currentOrder = {items:orderItems, filled:orderItems.map(()=>false)};
+
+  // Render
+  const itemsHTML = orderItems.map((id,i)=>{
+    const ing = ALL_INGREDIENTS.find(x=>x.id===id);
+    return `<img class="order-item" data-idx="${i}" src="${IMG}${ing.img}" alt="${ing.name}">`;
+  }).join('');
+
+  area.innerHTML = `
+    <div class="customer-avatar">${emoji}</div>
+    <div class="order-bubble">
+      <div class="order-label">I want:</div>
+      <div class="order-items">${itemsHTML}</div>
+    </div>
+  `;
+
+  document.getElementById('serveBtn').classList.remove('ready');
+
+  // Start timer for this customer
+  startTimer(lv.timePerOrder);
+}
+
+// ===== TIMER =====
+function startTimer(seconds){
+  clearInterval(state.timerInterval);
+  state.timerSeconds = seconds;
+  const fill = document.getElementById('timerFill');
+  const hud = document.getElementById('hudTimer');
+
+  fill.style.width = '100%';
+  fill.classList.remove('urgent');
+
+  state.timerInterval = setInterval(()=>{
+    state.timerSeconds -= 0.1;
+    const pct = (state.timerSeconds / seconds) * 100;
+    fill.style.width = Math.max(0,pct) + '%';
+    hud.textContent = `⏱ ${Math.ceil(state.timerSeconds)}s`;
+
+    if(pct < 30) fill.classList.add('urgent');
+
+    if(state.timerSeconds <= 0){
+      clearInterval(state.timerInterval);
+      // Customer leaves angry — overflow penalty!
+      state.overflowLevel += 12;
+      updateOverflow();
+      if(state.overflowLevel >= 100){
+        gameOver();
+      } else {
+        // Next customer
+        spawnCustomer();
+      }
+    }
+  }, 100);
+}
+
+// ===== LEVEL COMPLETE =====
+function levelComplete(){
+  clearInterval(state.timerInterval);
+  const lv = LEVELS[state.currentLevel];
+
+  // Stars based on overflow level
+  let stars = '⭐⭐⭐';
+  if(state.overflowLevel > 60) stars = '⭐';
+  else if(state.overflowLevel > 30) stars = '⭐⭐';
+
+  document.getElementById('levelStars').textContent = stars;
+  document.getElementById('levelTitle').textContent = `${lv.emoji} ${lv.name} — Clear!`;
+  document.getElementById('levelText').textContent = lv.clearMsg;
+
+  const btn = document.getElementById('levelBtn');
+  if(state.currentLevel >= LEVELS.length - 1){
+    btn.textContent = '🏆 Victory!';
+    btn.onclick = showWinScreen;
+  } else {
+    btn.textContent = 'Next Level →';
+    btn.onclick = nextLevel;
+  }
+
+  state.highestCleared = Math.max(state.highestCleared, state.currentLevel);
+  document.getElementById('levelMsg').classList.add('active');
+}
+
+function nextLevel(){
+  document.getElementById('levelMsg').classList.remove('active');
+  state.currentLevel++;
+  if(state.currentLevel >= LEVELS.length){
+    showWinScreen();
+  } else {
+    startLevel();
+  }
+}
+
+// ===== GAME OVER =====
+function gameOver(){
+  clearInterval(state.timerInterval);
+  document.getElementById('gameOverText').textContent =
+    `The pot overflowed on Level ${state.currentLevel+1}! You served ${state.customersServed} customers.`;
+  showScreen('gameOverScreen');
+}
+
+// ===== WIN =====
+function showWinScreen(){
+  document.getElementById('levelMsg').classList.remove('active');
+  document.getElementById('winScore').textContent = `Total customers served: ${state.totalScore}`;
+  showScreen('winScreen');
+}
+
+// ===== INIT =====
+renderLevelDots();
+</script>
+</body>
+</html>

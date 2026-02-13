@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Plate It Perfect! | PointyRice Hunger Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poetsen+One&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;min-height:100dvh;overflow-x:hidden;
+  font-family:'Barlow',sans-serif;
+  background:#faf9e1;color:#2b2b2b;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.back-home{
+  position:fixed;top:12px;left:12px;z-index:1000;
+  width:40px;height:40px;border-radius:50%;
+  background:#910f3f;color:#fff;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;font-weight:700;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+
+/* ===== SCREENS ===== */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:20px;text-align:center;}
+.screen.active{display:flex;}
+
+/* ===== TITLE ===== */
+#titleScreen{background:linear-gradient(180deg,#faf9e1 0%,#fff5e6 100%);}
+.title-plate{width:200px;height:auto;margin-bottom:-20px;animation:plateGlow 3s ease-in-out infinite alternate;}
+h1{font-family:'Poetsen One',cursive;font-size:2rem;color:#3d081b;margin:16px 0 4px;}
+.subtitle{font-size:1rem;color:#666;margin-bottom:8px;}
+
+.difficulty-row{display:flex;gap:10px;margin:16px 0;}
+.diff-btn{
+  padding:12px 20px;border-radius:12px;border:2px solid #ebebec;
+  background:#fff;font-family:'Poetsen One',cursive;font-size:.9rem;
+  cursor:pointer;transition:.2s;
+}
+.diff-btn:hover,.diff-btn.selected{border-color:#f8b401;background:#fff9e6;}
+.diff-btn .diff-label{font-size:.7rem;color:#888;display:block;margin-top:2px;}
+
+/* ===== BUTTONS ===== */
+.btn{
+  display:inline-block;padding:14px 32px;border-radius:12px;border:none;
+  font-family:'Poetsen One',cursive;font-size:1.1rem;cursor:pointer;
+  transition:transform .15s;min-height:44px;
+}
+.btn:active{transform:scale(.95);}
+.btn-primary{background:#f4894e;color:#fff;}
+.btn-accent{background:#f8b401;color:#fff;}
+.btn-secondary{background:#ebebec;color:#2b2b2b;}
+
+/* ===== GAME SCREEN ===== */
+#gameScreen{padding:10px;justify-content:flex-start;}
+.game-header{
+  width:100%;max-width:500px;display:flex;justify-content:space-between;
+  align-items:center;padding:8px 0;
+  font-family:'Poetsen One',cursive;font-size:.9rem;
+}
+.game-header .round-info{color:#910f3f;}
+.game-header .phase-info{color:#bb492b;}
+
+/* ===== PLATE CANVAS ===== */
+.plate-canvas{
+  position:relative;width:100%;max-width:420px;
+  aspect-ratio:4/3;margin:8px auto;
+  background:#f2efdd;border-radius:16px;
+  overflow:hidden;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.06);
+}
+.plate-canvas .plate-img{
+  position:absolute;inset:5%;width:90%;height:90%;
+  object-fit:contain;pointer-events:none;
+}
+
+/* Garnish on canvas */
+.garnish{
+  position:absolute;width:22%;height:auto;
+  object-fit:contain;
+  transform:translate(-50%,-50%);
+  transition:opacity .3s;
+  pointer-events:none;
+}
+.garnish.draggable{
+  pointer-events:auto;cursor:grab;
+  touch-action:none;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));
+}
+.garnish.draggable:active{cursor:grabbing;}
+.garnish.ghost{opacity:.25;border:2px dashed #78b29b;border-radius:8px;padding:4px;}
+
+/* ===== MEMORIZE OVERLAY ===== */
+.memo-overlay{
+  position:absolute;inset:0;z-index:20;
+  background:rgba(61,8,27,.85);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#fff;border-radius:16px;
+}
+.memo-timer{font-family:'Poetsen One',cursive;font-size:3rem;animation:pulse 1s infinite;}
+.memo-label{font-size:1rem;margin-top:8px;}
+.memo-overlay.hidden{display:none;}
+
+/* ===== INGREDIENT TRAY ===== */
+.tray{
+  width:100%;max-width:420px;
+  padding:8px;margin:8px auto;
+  background:#fff;border-radius:12px;
+  display:flex;flex-wrap:wrap;gap:8px;
+  justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.tray-item{
+  width:56px;height:56px;border-radius:10px;
+  background:#faf9e1;padding:4px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:grab;touch-action:none;
+  border:2px solid #ebebec;transition:.2s;
+}
+.tray-item:active{transform:scale(.9);}
+.tray-item.placed{opacity:.3;pointer-events:none;border-color:#78b29b;}
+.tray-item img{width:100%;height:100%;object-fit:contain;pointer-events:none;}
+
+/* ===== SUBMIT BAR ===== */
+.submit-bar{
+  width:100%;max-width:420px;padding:8px;
+  display:flex;justify-content:center;gap:12px;
+}
+
+/* ===== RESULT SCREEN ===== */
+#resultScreen{background:linear-gradient(180deg,#fff5e6,#faf9e1);}
+.result-plate{width:200px;height:auto;border-radius:16px;margin-bottom:12px;}
+.score-big{font-family:'Poetsen One',cursive;font-size:3rem;color:#3d081b;}
+.score-label{font-size:1rem;color:#666;margin:4px 0 8px;}
+.stars-big{font-size:2.5rem;margin:8px 0;}
+.result-breakdown{
+  background:#fff;border-radius:12px;padding:12px 16px;
+  max-width:300px;width:100%;margin:12px 0;text-align:left;
+  font-size:.85rem;
+}
+.result-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;}
+.result-row:last-child{border:none;}
+
+/* ===== ANIMATIONS ===== */
+@keyframes plateGlow{0%{filter:drop-shadow(0 0 0px transparent);}100%{filter:drop-shadow(0 0 12px rgba(248,180,1,.3));}}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+@keyframes bounceIn{0%{transform:scale(0);opacity:0;}100%{transform:scale(1);opacity:1;}}
+@keyframes fadeIn{0%{opacity:0;}100%{opacity:1;}}
+@keyframes confetti{
+  0%{transform:translateY(0) rotate(0);opacity:1;}
+  100%{transform:translateY(100vh) rotate(720deg);opacity:0;}
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:380px){
+  h1{font-size:1.6rem;}
+  .tray-item{width:48px;height:48px;}
+}
+</style>
+</head>
+<body>
+<a href="../" class="back-home" aria-label="Back to menu">←</a>
+
+<!-- ===== TITLE ===== -->
+<div id="titleScreen" class="screen active">
+  <img src="img/plate.png" class="title-plate" alt="Golden Plate">
+  <h1>🐟 Plate It Perfect!</h1>
+  <p class="subtitle">Memorize. Recreate. Impress the chef!</p>
+  <p style="font-size:.85rem;color:#888;margin:8px 0;">You'll see a beautifully plated fish.<br>Remember where everything goes!</p>
+
+  <div class="difficulty-row">
+    <button class="diff-btn selected" onclick="setDifficulty(0,this)">
+      Easy<span class="diff-label">5s peek</span>
+    </button>
+    <button class="diff-btn" onclick="setDifficulty(1,this)">
+      Medium<span class="diff-label">3s peek</span>
+    </button>
+    <button class="diff-btn" onclick="setDifficulty(2,this)">
+      Hard<span class="diff-label">2s peek</span>
+    </button>
+  </div>
+
+  <button class="btn btn-primary" onclick="startGame()" style="margin-top:12px;">Start Plating!</button>
+</div>
+
+<!-- ===== GAME ===== -->
+<div id="gameScreen" class="screen">
+  <div class="game-header">
+    <span class="round-info" id="roundInfo">Round 1/3</span>
+    <span class="phase-info" id="phaseInfo">Memorize!</span>
+  </div>
+
+  <div class="plate-canvas" id="plateCanvas">
+    <img src="img/plate.png" class="plate-img" alt="Plate">
+    <img src="img/fish.png" class="plate-img" style="z-index:2;" alt="Fish">
+    <div class="memo-overlay" id="memoOverlay">
+      <div class="memo-timer" id="memoTimer">5</div>
+      <div class="memo-label">Memorize the plate!</div>
+    </div>
+  </div>
+
+  <div class="tray" id="tray"></div>
+
+  <div class="submit-bar">
+    <button class="btn btn-secondary" onclick="resetPlacements()">↺ Reset</button>
+    <button class="btn btn-primary" id="serveBtn" onclick="submitPlating()">🍽 Serve!</button>
+  </div>
+</div>
+
+<!-- ===== RESULT ===== -->
+<div id="resultScreen" class="screen">
+  <div class="stars-big" id="resultStars">⭐⭐⭐</div>
+  <div class="score-big" id="resultScore">95%</div>
+  <div class="score-label">Plating Accuracy</div>
+
+  <div class="result-breakdown" id="resultBreakdown"></div>
+
+  <div style="display:flex;gap:12px;margin-top:16px;">
+    <button class="btn btn-secondary" onclick="goToTitle()">Menu</button>
+    <button class="btn btn-primary" onclick="startGame()">Play Again</button>
+  </div>
+  <button class="btn btn-accent" style="margin-top:12px;" onclick="window.open('https://www.pointyrice.com','_blank')">🛒 Get the Sticker Pack!</button>
+</div>
+
+<script>
+/* ========================================================
+   STEAMED FISH: PLATE IT PERFECT!
+   Memory plating game — see target, recreate from memory
+   ======================================================== */
+
+const IMG = 'img/';
+
+// ===== GARNISHES (excluding plate & fish which are always present) =====
+const GARNISHES = [
+  {id:'tomato',    name:'Tomato',      img:'tomato.png'},
+  {id:'chilli',    name:'Chilli',      img:'chilli.png'},
+  {id:'mushrooms', name:'Mushrooms',   img:'mushrooms.png'},
+  {id:'saltedveg', name:'Salted Veg',  img:'saltedveg.png'},
+  {id:'coriander', name:'Coriander',   img:'coriander.png'},
+  {id:'ginger',    name:'Ginger',      img:'ginger.png'},
+];
+
+// ===== DIFFICULTY =====
+const DIFFICULTIES = [
+  {name:'Easy',   peekTime:5, garnishCount:3, rounds:3},
+  {name:'Medium', peekTime:3, garnishCount:5, rounds:3},
+  {name:'Hard',   peekTime:2, garnishCount:6, rounds:3},
+];
+
+// ===== PREDEFINED TARGET POSITIONS =====
+// Each position is {left%, top%} on the plate canvas
+const POSITION_SLOTS = [
+  {left:25, top:30},  // top-left
+  {left:75, top:30},  // top-right
+  {left:20, top:60},  // mid-left
+  {left:80, top:60},  // mid-right
+  {left:50, top:25},  // top-center
+  {left:50, top:75},  // bottom-center
+  {left:35, top:50},  // center-left
+  {left:65, top:50},  // center-right
+];
+
+let state = {
+  difficulty: 0,
+  currentRound: 0,
+  totalScore: 0,
+  roundScores: [],
+  targetLayout: [],  // [{id, left, top}]
+  playerLayout: [],  // [{id, left, top}]
+  isDragging: false,
+  dragGarnish: null,
+  floatingEl: null,
+  placedGarnishes: new Set(),
+};
+
+// ===== SCREEN =====
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goToTitle(){showScreen('titleScreen');}
+
+function setDifficulty(d, btn){
+  state.difficulty = d;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ===== START GAME =====
+function startGame(){
+  state.currentRound = 0;
+  state.totalScore = 0;
+  state.roundScores = [];
+  startRound();
+}
+
+function startRound(){
+  const diff = DIFFICULTIES[state.difficulty];
+  state.placedGarnishes = new Set();
+  state.playerLayout = [];
+
+  showScreen('gameScreen');
+  document.getElementById('roundInfo').textContent = `Round ${state.currentRound+1}/${diff.rounds}`;
+
+  // Generate target layout
+  generateTarget();
+
+  // Show target (memorize phase)
+  showTarget();
+}
+
+function generateTarget(){
+  const diff = DIFFICULTIES[state.difficulty];
+  const count = diff.garnishCount;
+
+  // Pick random garnishes
+  const shuffled = [...GARNISHES].sort(()=>Math.random()-.5);
+  const picked = shuffled.slice(0, count);
+
+  // Assign random positions from slots
+  const slots = [...POSITION_SLOTS].sort(()=>Math.random()-.5).slice(0, count);
+
+  // Add some randomness to positions (±8%)
+  state.targetLayout = picked.map((g, i) => ({
+    id: g.id,
+    img: g.img,
+    name: g.name,
+    left: slots[i].left + (Math.random()*16 - 8),
+    top: slots[i].top + (Math.random()*16 - 8),
+  }));
+}
+
+// ===== SHOW TARGET (MEMORIZE) =====
+function showTarget(){
+  const diff = DIFFICULTIES[state.difficulty];
+  const canvas = document.getElementById('plateCanvas');
+  const overlay = document.getElementById('memoOverlay');
+  const timerEl = document.getElementById('memoTimer');
+
+  document.getElementById('phaseInfo').textContent = '👀 Memorize!';
+
+  // Clear previous garnishes
+  canvas.querySelectorAll('.garnish').forEach(el=>el.remove());
+
+  // Place target garnishes
+  state.targetLayout.forEach(g => {
+    const img = document.createElement('img');
+    img.className = 'garnish target-garnish';
+    img.src = IMG + g.img;
+    img.alt = g.name;
+    img.style.left = g.left + '%';
+    img.style.top = g.top + '%';
+    img.style.zIndex = 5;
+    canvas.appendChild(img);
+  });
+
+  // Show overlay with countdown
+  overlay.classList.remove('hidden');
+  let timeLeft = diff.peekTime;
+  timerEl.textContent = timeLeft;
+
+  const interval = setInterval(()=>{
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    if(timeLeft <= 0){
+      clearInterval(interval);
+      hideTarget();
+    }
+  }, 1000);
+}
+
+function hideTarget(){
+  const canvas = document.getElementById('plateCanvas');
+  const overlay = document.getElementById('memoOverlay');
+
+  // Hide overlay
+  overlay.classList.add('hidden');
+
+  // Remove target garnishes
+  canvas.querySelectorAll('.target-garnish').forEach(el=>el.remove());
+
+  document.getElementById('phaseInfo').textContent = '🍽 Recreate it!';
+
+  // Show tray with available garnishes
+  renderTray();
+
+  // Show ghost positions (subtle hint zones — just circles)
+  // Actually no, that defeats the purpose. Keep it pure memory!
+}
+
+// ===== TRAY =====
+function renderTray(){
+  const tray = document.getElementById('tray');
+  tray.innerHTML = '';
+
+  // Show ALL garnishes (not just the ones in target — adds challenge!)
+  const diff = DIFFICULTIES[state.difficulty];
+  // On easy, only show the correct ones. On medium/hard, show extras.
+  let trayItems;
+  if(state.difficulty === 0){
+    trayItems = state.targetLayout.map(g => GARNISHES.find(x=>x.id===g.id));
+  } else {
+    trayItems = [...GARNISHES]; // show all, player must remember which ones
+  }
+
+  trayItems.forEach(g => {
+    const el = document.createElement('div');
+    el.className = 'tray-item';
+    el.dataset.id = g.id;
+    el.innerHTML = `<img src="${IMG}${g.img}" alt="${g.name}" draggable="false">`;
+    el.addEventListener('touchstart', onTrayDragStart, {passive:false});
+    el.addEventListener('mousedown', onTrayDragStart);
+    tray.appendChild(el);
+  });
+}
+
+// ===== DRAG FROM TRAY TO CANVAS =====
+function onTrayDragStart(e){
+  e.preventDefault();
+  const trayItem = e.currentTarget;
+  const id = trayItem.dataset.id;
+  if(state.placedGarnishes.has(id)) return;
+
+  const g = GARNISHES.find(x=>x.id===id);
+  state.isDragging = true;
+  state.dragGarnish = g;
+
+  // Create floating
+  const fl = document.createElement('div');
+  fl.style.cssText = 'position:fixed;width:60px;height:60px;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);';
+  fl.innerHTML = `<img src="${IMG}${g.img}" style="width:100%;height:100%;object-fit:contain;" alt="">`;
+  document.body.appendChild(fl);
+  state.floatingEl = fl;
+
+  const pos = e.touches ? e.touches[0] : e;
+  fl.style.left = pos.clientX + 'px';
+  fl.style.top = pos.clientY + 'px';
+
+  document.addEventListener('touchmove', onTrayDragMove, {passive:false});
+  document.addEventListener('mousemove', onTrayDragMove);
+  document.addEventListener('touchend', onTrayDragEnd);
+  document.addEventListener('mouseup', onTrayDragEnd);
+}
+
+function onTrayDragMove(e){
+  if(!state.isDragging) return;
+  e.preventDefault();
+  const pos = e.touches ? e.touches[0] : e;
+  state.floatingEl.style.left = pos.clientX + 'px';
+  state.floatingEl.style.top = pos.clientY + 'px';
+}
+
+function onTrayDragEnd(e){
+  if(!state.isDragging) return;
+  state.isDragging = false;
+
+  document.removeEventListener('touchmove', onTrayDragMove);
+  document.removeEventListener('mousemove', onTrayDragMove);
+  document.removeEventListener('touchend', onTrayDragEnd);
+  document.removeEventListener('mouseup', onTrayDragEnd);
+
+  const pos = e.changedTouches ? e.changedTouches[0] : e;
+  const canvas = document.getElementById('plateCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const x = pos.clientX, y = pos.clientY;
+
+  if(state.floatingEl) state.floatingEl.remove();
+  state.floatingEl = null;
+
+  // Check if dropped on canvas
+  if(x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom){
+    const leftPct = ((x - rect.left) / rect.width) * 100;
+    const topPct = ((y - rect.top) / rect.height) * 100;
+    placeGarnish(state.dragGarnish, leftPct, topPct);
+  }
+
+  state.dragGarnish = null;
+}
+
+function placeGarnish(g, left, top){
+  const canvas = document.getElementById('plateCanvas');
+
+  // Remove if already placed
+  canvas.querySelectorAll(`.garnish[data-id="${g.id}"]`).forEach(el=>el.remove());
+  state.playerLayout = state.playerLayout.filter(p=>p.id !== g.id);
+
+  // Add to canvas
+  const img = document.createElement('img');
+  img.className = 'garnish draggable';
+  img.src = IMG + g.img;
+  img.alt = g.name;
+  img.dataset.id = g.id;
+  img.style.left = left + '%';
+  img.style.top = top + '%';
+  img.style.zIndex = 5;
+  canvas.appendChild(img);
+
+  state.playerLayout.push({id:g.id, left, top});
+  state.placedGarnishes.add(g.id);
+
+  // Mark tray item as placed
+  document.querySelectorAll(`.tray-item[data-id="${g.id}"]`).forEach(el=>el.classList.add('placed'));
+
+  // Allow re-dragging from canvas
+  img.addEventListener('touchstart', onCanvasDragStart, {passive:false});
+  img.addEventListener('mousedown', onCanvasDragStart);
+}
+
+// ===== DRAG ON CANVAS (reposition) =====
+function onCanvasDragStart(e){
+  e.preventDefault();
+  e.stopPropagation();
+  const el = e.currentTarget;
+  const id = el.dataset.id;
+  const g = GARNISHES.find(x=>x.id===id);
+
+  const canvas = document.getElementById('plateCanvas');
+  const rect = canvas.getBoundingClientRect();
+
+  const move = (ev) => {
+    ev.preventDefault();
+    const p = ev.touches ? ev.touches[0] : ev;
+    const leftPct = ((p.clientX - rect.left) / rect.width) * 100;
+    const topPct = ((p.clientY - rect.top) / rect.height) * 100;
+    el.style.left = Math.max(5,Math.min(95,leftPct)) + '%';
+    el.style.top = Math.max(5,Math.min(95,topPct)) + '%';
+  };
+
+  const end = (ev) => {
+    document.removeEventListener('touchmove', move);
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('touchend', end);
+    document.removeEventListener('mouseup', end);
+
+    // Update player layout
+    const p = state.playerLayout.find(x=>x.id===id);
+    if(p){
+      p.left = parseFloat(el.style.left);
+      p.top = parseFloat(el.style.top);
+    }
+  };
+
+  document.addEventListener('touchmove', move, {passive:false});
+  document.addEventListener('mousemove', move);
+  document.addEventListener('touchend', end);
+  document.addEventListener('mouseup', end);
+}
+
+// ===== RESET =====
+function resetPlacements(){
+  const canvas = document.getElementById('plateCanvas');
+  canvas.querySelectorAll('.garnish').forEach(el=>el.remove());
+  state.playerLayout = [];
+  state.placedGarnishes = new Set();
+  document.querySelectorAll('.tray-item').forEach(el=>el.classList.remove('placed'));
+}
+
+// ===== SUBMIT =====
+function submitPlating(){
+  const diff = DIFFICULTIES[state.difficulty];
+
+  // Score: for each target garnish, find closest player placement
+  let totalDist = 0;
+  let matched = 0;
+  const breakdown = [];
+
+  state.targetLayout.forEach(target => {
+    const player = state.playerLayout.find(p=>p.id === target.id);
+    if(player){
+      const dx = target.left - player.left;
+      const dy = target.top - player.top;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const accuracy = Math.max(0, 100 - dist * 2); // 2% penalty per 1% distance
+      totalDist += accuracy;
+      matched++;
+      breakdown.push({name:target.name, accuracy:Math.round(accuracy), placed:true});
+    } else {
+      breakdown.push({name:target.name, accuracy:0, placed:false});
+    }
+  });
+
+  // Also penalize placing wrong garnishes
+  const wrongOnes = state.playerLayout.filter(p => !state.targetLayout.find(t=>t.id===p.id));
+  wrongOnes.forEach(w => {
+    const g = GARNISHES.find(x=>x.id===w.id);
+    breakdown.push({name:g.name, accuracy:-10, placed:true, wrong:true});
+    totalDist -= 10;
+  });
+
+  const maxScore = state.targetLayout.length * 100;
+  const roundScore = Math.max(0, Math.round((totalDist / maxScore) * 100));
+
+  state.roundScores.push({score:roundScore, breakdown});
+  state.totalScore += roundScore;
+  state.currentRound++;
+
+  if(state.currentRound >= diff.rounds){
+    showResults();
+  } else {
+    // Quick feedback then next round
+    showRoundFeedback(roundScore);
+  }
+}
+
+function showRoundFeedback(score){
+  const phaseEl = document.getElementById('phaseInfo');
+  let msg = score >= 90 ? '🤌 Chef\'s kiss!' : score >= 70 ? '👍 Not bad!' : score >= 50 ? '🤔 Hmm...' : '😅 Aiya...';
+  phaseEl.textContent = `${msg} ${score}%`;
+  setTimeout(()=> startRound(), 1500);
+}
+
+// ===== RESULTS =====
+function showResults(){
+  const diff = DIFFICULTIES[state.difficulty];
+  const avgScore = Math.round(state.totalScore / diff.rounds);
+
+  let stars = '⭐⭐⭐';
+  if(avgScore < 50) stars = '⭐';
+  else if(avgScore < 75) stars = '⭐⭐';
+
+  document.getElementById('resultStars').textContent = stars;
+  document.getElementById('resultScore').textContent = avgScore + '%';
+
+  // Build breakdown
+  const bd = document.getElementById('resultBreakdown');
+  let html = '';
+  state.roundScores.forEach((r,i) => {
+    html += `<div style="font-family:'Poetsen One',cursive;color:#910f3f;margin:8px 0 4px;">Round ${i+1}: ${r.score}%</div>`;
+    r.breakdown.forEach(b => {
+      const icon = b.wrong ? '❌' : b.placed ? '✅' : '⬜';
+      const val = b.wrong ? 'Wrong item!' : b.placed ? b.accuracy+'%' : 'Missing!';
+      html += `<div class="result-row"><span>${icon} ${b.name}</span><span>${val}</span></div>`;
+    });
+  });
+  bd.innerHTML = html;
+
+  showScreen('resultScreen');
+}
+
+</script>
+</body>
+</html>
