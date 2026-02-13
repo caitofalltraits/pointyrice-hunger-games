@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Auntie CaiFan Builder | PointyRice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poetsen+One&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   RESET & BASE
+   ========================================================= */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+body{
+  font-family:'Barlow',sans-serif;
+  background:#faf9e1;
+  color:#2b2b2b;
+  min-height:100dvh;
+  overflow-x:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+h1,h2,h3{font-family:'Poetsen One',cursive;}
+button{
+  font-family:'Barlow',sans-serif;
+  font-weight:600;
+  cursor:pointer;
+  border:none;
+  border-radius:12px;
+  padding:12px 24px;
+  font-size:1rem;
+  transition:transform .15s,box-shadow .15s,background .2s;
+}
+button:active{transform:scale(.96);}
+img{-webkit-user-drag:none;user-select:none;}
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+#app{
+  width:100%;
+  max-width:680px;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  padding:12px 16px 24px;
+  position:relative;
+}
+
+/* =========================================================
+   HEADER / RUNNING TOTAL
+   ========================================================= */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 0 4px;
+}
+.brand{
+  font-family:'Poetsen One',cursive;
+  font-size:1.1rem;
+  color:#3d081b;
+}
+.running-total{
+  font-family:'Poetsen One',cursive;
+  font-size:1rem;
+  color:#910f3f;
+  background:#f2efdd;
+  padding:6px 14px;
+  border-radius:20px;
+  white-space:nowrap;
+}
+
+/* =========================================================
+   AUNTIE DIALOGUE
+   ========================================================= */
+.dialogue-area{
+  background:#f2efdd;
+  border-radius:16px;
+  padding:16px 20px;
+  margin:10px 0;
+  position:relative;
+  min-height:160px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.dialogue-area::after{
+  content:'';
+  position:absolute;
+  bottom:-10px;
+  left:32px;
+  width:0;height:0;
+  border-left:12px solid transparent;
+  border-right:12px solid transparent;
+  border-top:12px solid #f2efdd;
+}
+.dialogue-label{
+  font-family:'Poetsen One',cursive;
+  font-size:.75rem;
+  color:#bb492b;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  margin-bottom:4px;
+}
+.dialogue-text{
+  font-size:1.05rem;
+  line-height:1.45;
+  color:#3d081b;
+  font-weight:500;
+}
+.dialogue-text.fresh{
+  animation:dialoguePop .6s ease-out;
+}
+@keyframes dialoguePop{
+  0%{opacity:0;transform:translateY(10px);}
+  100%{opacity:1;transform:translateY(0);}
+}
+.dialogue-tap{
+  font-size:.72rem;
+  color:#bb492b;
+  margin-top:6px;
+  animation:pulse 1.2s ease infinite;
+  cursor:pointer;
+  user-select:none;
+  text-align:right;
+}
+.dialogue-area.clickable{cursor:pointer;}
+.pro-tip{
+  margin-top:8px;
+  font-size:.82rem;
+  line-height:1.45;
+  color:#7a5c2e;
+  font-style:italic;
+}
+
+/* =========================================================
+   TUTORIAL ARROWS  (guide overlays on canvas)
+   ========================================================= */
+.tutorial-arrow{
+  position:absolute;
+  z-index:999;
+  pointer-events:none;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  transform:translate(-50%,-50%);
+  animation:arrowPulse 1.2s ease-in-out infinite;
+}
+/* CSS triangle arrow */
+.tutorial-arrow .arrow-tri{
+  width:0;height:0;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));
+}
+/* Directions */
+.tutorial-arrow.dir-down .arrow-tri{
+  border-left:8px solid transparent;
+  border-right:8px solid transparent;
+  border-top:14px solid #bb492b;
+}
+.tutorial-arrow.dir-up .arrow-tri{
+  border-left:8px solid transparent;
+  border-right:8px solid transparent;
+  border-bottom:14px solid #bb492b;
+}
+.tutorial-arrow.dir-left .arrow-tri{
+  border-top:8px solid transparent;
+  border-bottom:8px solid transparent;
+  border-right:14px solid #bb492b;
+}
+.tutorial-arrow.dir-right .arrow-tri{
+  border-top:8px solid transparent;
+  border-bottom:8px solid transparent;
+  border-left:14px solid #bb492b;
+}
+/* Layout direction per arrow direction */
+.tutorial-arrow.dir-down,
+.tutorial-arrow.dir-up{flex-direction:column;}
+.tutorial-arrow.dir-up{flex-direction:column-reverse;}
+.tutorial-arrow.dir-left{flex-direction:row-reverse;}
+.tutorial-arrow.dir-right{flex-direction:row;}
+
+.tutorial-arrow .arrow-label{
+  font-family:'Barlow',sans-serif;
+  font-size:.62rem;
+  font-weight:700;
+  color:#fff;
+  background:#bb492b;
+  padding:2px 8px;
+  border-radius:8px;
+  white-space:nowrap;
+  box-shadow:0 1px 4px rgba(0,0,0,.2);
+  line-height:1.3;
+}
+@keyframes arrowPulse{
+  0%,100%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  50%{opacity:.65;transform:translate(-50%,-50%) scale(1.1);}
+}
+
+/* =========================================================
+   CANVAS AREA  (the plate zone)
+   ========================================================= */
+.canvas-wrap{
+  position:relative;
+  width:100%;
+  max-width:600px;
+  aspect-ratio:4/3;
+  margin:18px auto 10px;
+  touch-action:none;
+}
+/* Inner background sits behind stickers but doesn't clip them */
+.canvas-wrap::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:#f2efdd;
+  border-radius:20px;
+  box-shadow:inset 0 2px 12px rgba(0,0,0,.05);
+  z-index:0;
+  pointer-events:none;
+}
+
+/* =========================================================
+   STICKER (on canvas)
+   ========================================================= */
+.sticker{
+  position:absolute;
+  cursor:grab;
+  transition:left .45s cubic-bezier(.34,1.56,.64,1),
+             top .45s cubic-bezier(.34,1.56,.64,1),
+             transform .3s,
+             opacity .3s;
+  image-rendering:auto;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.sticker img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+}
+.sticker.selected{
+  outline:3px dashed #910f3f;
+  outline-offset:4px;
+}
+.sticker.locked{
+  cursor:default!important;
+  pointer-events:none;
+}
+.sticker.dragging{
+  cursor:grabbing;
+  transition:none!important;
+  filter:drop-shadow(0 6px 16px rgba(0,0,0,.25));
+}
+.sticker.landing{
+  animation:stickerLand .45s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes stickerLand{
+  0%{transform:translate(-50%,-50%) scale(0) rotate(-20deg);opacity:0;}
+  60%{transform:translate(-50%,-50%) scale(1.1) rotate(5deg);opacity:1;}
+  100%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1;}
+}
+
+/* rotation handle (appears on selected sticker) */
+.rotate-handle{
+  display:none;
+  position:absolute;
+  top:-14px;
+  right:-14px;
+  width:28px;
+  height:28px;
+  background:#78b29b;
+  border:2px solid #fff;
+  border-radius:50%;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  line-height:1;
+  color:#fff;
+  cursor:grab;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+  z-index:10;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.sticker.selected .rotate-handle{
+  display:flex;
+}
+.rotate-handle:active{
+  cursor:grabbing;
+  background:#5a9079;
+}
+
+/* riceboy speech bubble */
+.riceboy-bubble{
+  position:absolute;
+  top:-36px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#fff;
+  color:#3d081b;
+  font-family:'Poetsen One',cursive;
+  font-size:.7rem;
+  padding:5px 12px;
+  border-radius:12px;
+  white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
+  animation:bubbleIn .4s ease-out;
+  transition:opacity .4s ease-out;
+  pointer-events:none;
+}
+.riceboy-bubble::after{
+  content:'';
+  position:absolute;
+  bottom:-6px;
+  left:50%;
+  transform:translateX(-50%);
+  width:0;height:0;
+  border-left:6px solid transparent;
+  border-right:6px solid transparent;
+  border-top:6px solid #fff;
+}
+@keyframes bubbleIn{
+  0%{opacity:0;transform:translateX(-50%) scale(.7);}
+  100%{opacity:1;transform:translateX(-50%) scale(1);}
+}
+.riceboy-bubble.fade-out{
+  opacity:0;
+  pointer-events:none;
+}
+
+/* plate note */
+.plate-note{
+  position:absolute;
+  bottom:-24px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:.72rem;
+  color:#78b29b;
+  white-space:nowrap;
+  animation:fadeUp .6s ease;
+}
+@keyframes fadeUp{
+  0%{opacity:0;transform:translateX(-50%) translateY(8px);}
+  100%{opacity:1;transform:translateX(-50%) translateY(0);}
+}
+
+/* =========================================================
+   CONTROLS AREA  (below canvas)
+   ========================================================= */
+.controls{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  margin-top:12px;
+  width:100%;
+}
+.controls:empty{
+  display:none;
+}
+.controls.waiting{
+  opacity:0;
+  pointer-events:none;
+}
+.controls.reveal{
+  animation:controlsFadeIn .4s ease-out forwards;
+}
+@keyframes controlsFadeIn{
+  0%{opacity:0;transform:translateY(6px);}
+  100%{opacity:1;transform:translateY(0);}
+}
+
+/* button rows */
+.btn-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  justify-content:center;
+}
+
+/* primary (mustard) */
+.btn-primary{
+  background:#f8b401;
+  color:#2b2b2b;
+  box-shadow:0 3px 0 #c48e00;
+}
+.btn-primary:hover{background:#ffc42e;}
+
+/* secondary (teal) */
+.btn-secondary{
+  background:#78b29b;
+  color:#fff;
+  box-shadow:0 3px 0 #5a9079;
+}
+.btn-secondary:hover{background:#8dc4ab;}
+
+/* accent (coral) */
+.btn-accent{
+  background:#f4894e;
+  color:#fff;
+  box-shadow:0 3px 0 #c46a36;
+}
+.btn-accent:hover{background:#f9a06e;}
+
+/* danger / burnt orange */
+.btn-danger{
+  background:#bb492b;
+  color:#fff;
+  box-shadow:0 3px 0 #8e361f;
+}
+
+/* cancel / grey */
+.btn-cancel{
+  background:#ebebec;
+  color:#2b2b2b;
+  box-shadow:0 3px 0 #ccc;
+}
+.btn-cancel:hover{background:#ddd;}
+
+/* small */
+.btn-sm{
+  padding:8px 16px;
+  font-size:.85rem;
+  border-radius:10px;
+}
+
+/* text link style */
+.btn-link{
+  background:none;
+  color:#910f3f;
+  box-shadow:none;
+  padding:4px 10px;
+  font-size:.78rem;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+.btn-link:hover{background:rgba(145,15,63,.06);}
+.btn-link:active{transform:none;}
+
+.dish-hint{
+  font-size:.72rem;
+  color:#999;
+  font-style:italic;
+  margin-top:2px;
+}
+
+/* =========================================================
+   DISH OVERLAY  (floats on top of the canvas)
+   ========================================================= */
+.dish-overlay{
+  position:absolute;
+  inset:0;
+  z-index:950;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  padding:10px;
+  border-radius:20px;
+  background:linear-gradient(to bottom, rgba(250,249,225,.15) 0%, rgba(250,249,225,.92) 45%, rgba(250,249,225,.98) 100%);
+  animation:overlayFadeIn .3s ease-out;
+}
+@keyframes overlayFadeIn{
+  0%{opacity:0;transform:translateY(12px);}
+  100%{opacity:1;transform:translateY(0);}
+}
+.dish-overlay .overlay-back{
+  align-self:flex-start;
+  margin-bottom:6px;
+}
+
+/* =========================================================
+   ITEM GRID  (dish selection cards)
+   ========================================================= */
+.item-grid{
+  display:flex;
+  gap:8px;
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:4px 4px 10px;
+  border-radius:10px;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x mandatory;
+}
+.item-grid::-webkit-scrollbar{height:6px;}
+.item-grid::-webkit-scrollbar-track{background:#f2efdd;border-radius:3px;}
+.item-grid::-webkit-scrollbar-thumb{background:#78b29b;border-radius:3px;}
+.item-card{
+  background:#fff;
+  border-radius:14px;
+  padding:8px;
+  text-align:center;
+  cursor:pointer;
+  transition:transform .15s,box-shadow .15s;
+  width:100px;
+  min-width:100px;
+  max-width:100px;
+  flex-shrink:0;
+  scroll-snap-align:start;
+  box-shadow:0 2px 8px rgba(0,0,0,.07);
+  border:2px solid transparent;
+}
+.item-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 6px 16px rgba(0,0,0,.12);
+  border-color:#f8b401;
+}
+.item-card img{
+  width:100%;
+  aspect-ratio:1;
+  object-fit:contain;
+  border-radius:8px;
+  background:#faf9e1;
+}
+.item-card .item-name{
+  font-weight:600;
+  font-size:.8rem;
+  margin-top:6px;
+  line-height:1.2;
+}
+.item-card .item-price{
+  font-size:.72rem;
+  color:#78b29b;
+  font-weight:700;
+  margin-top:2px;
+}
+
+/* =========================================================
+   PLAY MODE CONTROLS (below canvas)
+   ========================================================= */
+.play-area{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  margin:10px auto 0;
+  width:100%;
+  max-width:600px;
+}
+.play-area.hidden{display:none!important;}
+.play-controls{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+/* =========================================================
+   PERSPECTIVE TIP
+   ========================================================= */
+.perspective-tip{
+  background:#fff;
+  border-left:4px solid #f8b401;
+  border-radius:0 12px 12px 0;
+  padding:12px 16px;
+  font-size:.82rem;
+  line-height:1.5;
+  color:#3d081b;
+  margin:8px 0;
+  animation:fadeUp .5s ease;
+}
+
+/* =========================================================
+   ORDER SUMMARY / CHECKOUT
+   ========================================================= */
+.order-summary{
+  background:#fff;
+  border-radius:16px;
+  padding:20px;
+  width:100%;
+  box-shadow:0 4px 16px rgba(0,0,0,.08);
+}
+.order-summary h2{
+  font-size:1.2rem;
+  color:#3d081b;
+  margin-bottom:12px;
+}
+.order-line{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px solid #f2efdd;
+  font-size:.9rem;
+}
+.order-line:last-of-type{border-bottom:none;}
+.order-total{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 0 0;
+  border-top:2px solid #3d081b;
+  font-family:'Poetsen One',cursive;
+  font-size:1.2rem;
+  color:#910f3f;
+}
+.plate-group-header{
+  font-family:'Poetsen One',cursive;
+  font-size:.95rem;
+  color:#bb492b;
+  padding:8px 0 4px;
+}
+
+/* =========================================================
+   MINI CART PLATES  (top right)
+   ========================================================= */
+.cart-area{
+  position:fixed;
+  top:12px;
+  right:12px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  z-index:1000;
+  align-items:flex-end;
+}
+.mini-plate{
+  width:64px;
+  height:48px;
+  background:#94b7cb;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+  animation:miniSlideIn .4s ease;
+  overflow:hidden;
+}
+.mini-plate img{
+  width:90%;
+  height:90%;
+  object-fit:contain;
+}
+.mini-plate .cart-label{
+  position:absolute;
+  bottom:-1px;
+  left:0;
+  right:0;
+  text-align:center;
+  font-size:.5rem;
+  font-weight:700;
+  color:#fff;
+  background:rgba(61,8,27,.75);
+  padding:1px 0;
+  border-radius:0 0 10px 10px;
+}
+@keyframes miniSlideIn{
+  0%{transform:scale(0) translateX(40px);opacity:0;}
+  100%{transform:scale(1) translateX(0);opacity:1;}
+}
+
+/* =========================================================
+   WELCOME SCREEN
+   ========================================================= */
+.welcome{
+  text-align:center;
+  padding:40px 20px 20px;
+  animation:fadeUp .6s ease;
+}
+.welcome h1{
+  font-size:1.8rem;
+  color:#3d081b;
+  margin-bottom:8px;
+}
+.welcome p{
+  font-size:1rem;
+  color:#2b2b2b;
+  margin-bottom:24px;
+  line-height:1.5;
+}
+
+/* =========================================================
+   HIDDEN UTILITY
+   ========================================================= */
+.hidden{display:none!important;}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media(max-width:420px){
+  #app{padding:8px 10px 20px;}
+  .dialogue-area{padding:12px 14px;min-height:148px;}
+  .dialogue-text{font-size:.95rem;}
+  button{padding:10px 18px;font-size:.9rem;}
+  .item-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;}
+  .welcome h1{font-size:1.4rem;}
+  .canvas-wrap{margin:12px auto 8px;}
+}
+@media(min-width:600px){
+  .canvas-wrap{max-width:600px;}
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+@keyframes shake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-4px);}
+  40%{transform:translateX(4px);}
+  60%{transform:translateX(-3px);}
+  80%{transform:translateX(3px);}
+}
+.shake{animation:shake .4s ease;}
+
+@keyframes pulse{
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.04);}
+}
+.pulse{animation:pulse .6s ease;}
+
+@keyframes bounceIn{
+  0%{transform:scale(0);opacity:0;}
+  50%{transform:scale(1.15);}
+  100%{transform:scale(1);opacity:1;}
+}
+.bounce-in{animation:bounceIn .5s cubic-bezier(.34,1.56,.64,1);}
+
+/* restart button (always visible, top-left) */
+.restart-btn{
+  position:fixed;
+  top:12px;
+  left:12px;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#f2efdd;
+  border:2px solid #e0dcc8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.2rem;
+  color:#910f3f;
+  cursor:pointer;
+  z-index:1000;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+  transition:transform .15s, background .2s;
+  padding:0;
+}
+.restart-btn:hover{background:#e8e5d0;transform:scale(1.08);}
+.restart-btn:active{transform:scale(.94);}
+
+/* pack suggestion banner */
+.pack-suggestion{
+  background:linear-gradient(135deg,#78b29b 0%,#5a9079 100%);
+  color:#fff;
+  border-radius:14px;
+  padding:16px 20px;
+  margin-bottom:12px;
+  text-align:center;
+  animation:bounceIn .5s cubic-bezier(.34,1.56,.64,1);
+}
+.pack-suggestion .pack-title{
+  font-family:'Poetsen One',cursive;
+  font-size:1.05rem;
+  margin-bottom:6px;
+}
+.pack-suggestion .pack-detail{
+  font-size:.85rem;
+  line-height:1.45;
+  margin-bottom:4px;
+}
+.pack-suggestion .pack-savings{
+  font-family:'Poetsen One',cursive;
+  font-size:1.1rem;
+  color:#f8b401;
+  margin-top:6px;
+}
+
+/* (scrollbar styles moved to .item-grid above) */
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <span class="brand">PointyRice CaiFan</span>
+    <span class="running-total" id="runningTotal">$0.00</span>
+  </div>
+
+  <!-- AUNTIE DIALOGUE + CONTROLS (all inside the speech bubble) -->
+  <div class="dialogue-area" id="dialogueArea">
+    <div class="dialogue-label">Auntie says:</div>
+    <div class="dialogue-text" id="dialogueText"></div>
+    <div class="controls" id="controls"></div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap hidden" id="canvas"></div>
+
+  <!-- PLAY MODE CONTROLS (below canvas, only visible during play/checkout) -->
+  <div class="play-area hidden" id="playArea"></div>
+</div>
+
+<!-- CART AREA (fixed position) -->
+<div class="cart-area" id="cartArea"></div>
+
+<!-- RESTART BUTTON (always visible) -->
+<button class="restart-btn" id="restartBtn" title="Start over">↺</button>
+
+<script>
+/* ==========================================================
+   AUNTIE CAIFAN BUILDER — Complete Game Logic
+   ========================================================== */
+(() => {
+'use strict';
+
+// ── Asset path ──
+const IMG = 'img/';
+
+// ── Sticker catalogue ──
+const CATALOGUE = {
+  meat: [
+    { id:'02', file:'02_SweetSourMeat.png', name:'Sweet & Sour Meat', price:3.50 },
+    { id:'03', file:'03_CurryChicken.png', name:'Curry Chicken', price:3.50 },
+    { id:'06', file:'06_PorkBellyDarkSoy.png', name:'Pork Belly', price:3.50 },
+    { id:'07', file:'07_SlicedMeatChops.png', name:'Sliced Meat Chops', price:3.50 },
+    { id:'08', file:'08_KungPowChicken.png', name:'Kung Pow Chicken', price:3.50 },
+    { id:'09', file:'09_GarlicSproutMeat.png', name:'Garlic Sprout Meat', price:3.50 },
+    { id:'10', file:'10_FriedTofuWithSauce.png', name:'Fried Tofu', price:3.50 },
+    { id:'18', file:'18_Potatoes.png', name:'Potatoes & Meat', price:3.50 },
+    { id:'27', file:'27_StirFryHotDog.png', name:'Hotdog & Fries', price:3.50 },
+  ],
+  fish: [
+    { id:'04', file:'04_BatangFriedFish.png', name:'Batang Fried Fish', price:3.50 },
+    { id:'05', file:'05_SteamedFish.png', name:'Steamed Fish', price:3.50 },
+    { id:'29', file:'29_sotong.png', name:'Sotong', price:3.50 },
+  ],
+  egg: [
+    { id:'12', file:'12_SteamEgg.png', name:'Steamed Egg', price:3.00 },
+    { id:'14', file:'14_EggTofu.png', name:'Egg Tofu', price:3.00 },
+    { id:'22', file:'22_SoyEgg.png', name:'Soy Egg', price:3.00 },
+    { id:'23', file:'23_SaltedEgg.png', name:'Salted Egg', price:3.00 },
+    { id:'28', file:'28_eggandtomato.png', name:'Egg & Tomato', price:3.00 },
+  ],
+  veggies: [
+    { id:'11', file:'11_CurryCabbage.png', name:'Curry Cabbage', price:3.00 },
+    { id:'13', file:'13_Brinjal.png', name:'Brinjal', price:3.00 },
+    { id:'15', file:'15_GreenBeans.png', name:'Green Beans', price:3.00 },
+    { id:'16', file:'16_Okra.png', name:'Okra', price:3.00 },
+    { id:'17', file:'17_StirFryCabbage.png', name:'Stir Fry Cabbage', price:3.00 },
+    { id:'19', file:'19_Taugeh.png', name:'Taugeh', price:3.00 },
+    { id:'20', file:'20_Pumpkin.png', name:'Pumpkin', price:3.00 },
+  ],
+};
+
+const SAUCES = [
+  { id:'25', file:'25_BrownGravy.png', name:'Brown Gravy', price:2.50 },
+  { id:'24', file:'24_CurrySauceWithVeg.png', name:'Curry Sauce', price:2.50 },
+];
+
+const SUNNY_EGG = { id:'21', file:'21_FriedEgg.png', name:'Sunny Egg', price:3.00 };
+const PLATE_ITEM = { id:'plate', file:'plate.png', name:'Blue Plate', price:2.50 };
+const RICEBOY_ITEM = { id:'riceboy', file:'Riceboy.png', name:'Riceboy', price:2.50 };
+
+// ── Real size ratios (based on original cm dimensions, relative to plate width) ──
+// Plate: 9x6cm = 88% of canvas (base)
+// 1cm = 88/9 = 9.78% of canvas width
+const SIZE = {
+  plate: 88,      // 9cm → 88%
+  riceboy: 54,    // 5.5cm → 53.8%
+  sauce: 49,      // 5cm → 48.9%
+  dish: 34,       // 3.5cm → 34.2%
+  sunnyEgg: 34,   // 3.5cm → 34.2% (same as dishes)
+};
+
+// ── Shelf row: dishes line up above Riceboy, player drags them down later ──
+const SHELF_TOP = 12;  // % from top of canvas — sits above riceboy
+// Dishes spread evenly in a row; we calculate left% per dish count dynamically
+
+// ── Auntie dialogue pools ──
+const LINES = {
+  welcome: [
+    "Eh hello! Welcome to Auntie's caifan stall! How I call you ah?",
+    "Wah you come already! Auntie been waiting. What's your name ah?",
+    "Come come come! First tell Auntie — how I call you?",
+  ],
+  plateIntro: [
+    "{name} ah, come come, let's build your plate!",
+    "Ok {name}, plate ready! Let's go, don't shy!",
+    "{name}! Auntie give you the best plate. Let's makan!",
+  ],
+  wantRice: [
+    "{name} ah, want rice anot?",
+    "Eh {name}, cannot eat caifan without rice leh. Want or not?",
+    "{name}, Riceboy waiting for you — want rice?",
+  ],
+  riceYes: [
+    "Good good, rice is the foundation lah!",
+    "Correct! No rice no life, right {name}?",
+    "Smart choice! Riceboy, come out!",
+  ],
+  riceNo: [
+    "Huh? No rice? Ok lah, up to you...",
+    "Wah, diet ah {name}? Ok never mind~",
+    "No rice? Aiya, you sure anot? Ok lah ok lah.",
+  ],
+  whatFirst: [
+    "{name} ah, what you want first?",
+    "Ok {name}, pick your first dish! Don't be shy~",
+    "Alright {name}, what catch your eye?",
+  ],
+  whatElse: [
+    "What else you want, {name}?",
+    "More more! What next?",
+    "Still got space! What else, {name}?",
+    "Your plate looking good! Anything else?",
+  ],
+  firstDish: [
+    "Nice nice! Auntie stack on top first ah — later you drag dishes around the rice!",
+    "Good pick! Auntie pile here first — later you arrange around the plate like real caifan!",
+    "Ok {name}, Auntie put here first! Later you spread the dishes around Riceboy~",
+    "Steady! Stack first, later you drag around the plate. Dishes go around the rice one!",
+  ],
+  goodChoice: [
+    "Wah, good choice lah!",
+    "Eh, this one very nice one!",
+    "Auntie's favourite also!",
+    "Power lah, {name}! Good taste!",
+    "Ooh, solid pick!",
+    "Cannot go wrong with this one!",
+  ],
+  plateFull: [
+    "Wah, plate very full already leh!",
+    "Aiya, {name}! Where to put? Plate overflowing already!",
+    "Eh slow down lah, plate no space already!",
+  ],
+  wantSauce: [
+    "Want sauce anot, {name}? Auntie pour on top of Riceboy one!",
+    "{name}, sauce go right on Riceboy's head — which one you want?",
+    "Time for sauce! Auntie drizzle on top of the rice, shiok!",
+  ],
+  wantSunnyEgg: [
+    "Want fried egg on top, {name}? Sits right on Riceboy's head — very cute!",
+    "Eh {name}, sunny egg go on top of Riceboy like a hat! Want?",
+    "Last one — sunny egg! It sits on Riceboy's head. {name}, trust Auntie!",
+  ],
+  noSunnyEggNoRice: [
+    "No Riceboy means no egg on top lah! Egg needs somewhere to sit~",
+    "Aiya {name}, egg on top needs Riceboy! Skip this one ok?",
+  ],
+  playMode: [
+    "Ok {name}, time to arrange! Want Auntie show you where to put, or you pro already?",
+    "Eh {name}, arrange time! Need Auntie's help or you know what you're doing?",
+    "{name}! Ready to arrange your plate — want a quick tutorial or you go freestyle?",
+  ],
+  checkout: [
+    "Shiok anot? Checkout or order another plate?",
+    "Looking good lah, {name}! Ready to checkout?",
+    "Wah your plate damn nice! Checkout or want more?",
+  ],
+  anotherPlate: [
+    "Wah, big appetite! Ok ok, let's make another one~",
+    "Another plate?! {name} you sure hungry! Let's go!",
+    "Ok lah, Auntie pack this one first. New plate coming!",
+  ],
+  finalCheckout: [
+    "Ok lah {name}, let Auntie tally up for you~",
+    "Wait ah, Auntie counting... Ok got it!",
+    "Let me pack everything nice nice for you, {name}!",
+  ],
+};
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function say(key, extraReplacements) {
+  let line = pick(LINES[key]);
+  line = line.replace(/\{name\}/g, state.playerName || '');
+  if (extraReplacements) {
+    for (const [k,v] of Object.entries(extraReplacements)) {
+      line = line.replace(new RegExp(`\\{${k}\\}`,'g'), v);
+    }
+  }
+  return line;
+}
+
+// ── State ──
+const state = {
+  playerName: '',
+  phase: 'welcome', // welcome, plate, rice, dishes, dishCategory, sauce, sunnyEgg, play, checkout, summary
+  currentPlate: { items: [], stickers: [], dishCount: 0, hasRice: false, hasSauce: false, hasSunnyEgg: false },
+  cart: [],  // completed plates
+  zCounter: 10,
+  selectedSticker: null,
+  selectedShelfDish: null,
+  dragging: null,
+};
+
+// ── DOM refs ──
+const $dialogue = document.getElementById('dialogueText');
+const $dialogueArea = document.getElementById('dialogueArea');
+const $canvas = document.getElementById('canvas');
+const $controls = document.getElementById('controls');
+const $total = document.getElementById('runningTotal');
+const $cartArea = document.getElementById('cartArea');
+const $playArea = document.getElementById('playArea');
+
+// ── Helpers ──
+function $(sel, parent) { return (parent||document).querySelector(sel); }
+function $$(sel, parent) { return [...(parent||document).querySelectorAll(sel)]; }
+
+function updateTotal() {
+  let sum = 0;
+  // current plate
+  state.currentPlate.items.forEach(i => sum += i.price);
+  // cart plates
+  state.cart.forEach(plate => plate.items.forEach(i => sum += i.price));
+  $total.textContent = '$' + sum.toFixed(2);
+}
+
+let _activeProceed = null; // track tap-to-continue listener for cleanup
+
+function setDialogue(text, onDone) {
+  $dialogue.innerHTML = '';
+  $dialogueArea.classList.remove('clickable');
+  // Remove any orphaned tap-to-continue listener
+  if (_activeProceed) {
+    $dialogueArea.removeEventListener('click', _activeProceed);
+    _activeProceed = null;
+  }
+
+  // Hide controls while text appears
+  $controls.classList.remove('reveal');
+  $controls.classList.add('waiting');
+
+  // Trigger fresh entrance animation
+  $dialogue.classList.remove('fresh');
+  void $dialogue.offsetWidth; // force reflow so animation restarts
+  $dialogue.classList.add('fresh');
+
+  const textSpan = document.createElement('span');
+  textSpan.textContent = text;
+  $dialogue.appendChild(textSpan);
+
+  // Reveal controls after text animation (0.6s) finishes
+  setTimeout(() => {
+    $controls.classList.remove('waiting');
+    $controls.classList.add('reveal');
+  }, 600);
+
+  if (onDone) showTapToContinue(onDone);
+}
+
+/* Same as setDialogue but accepts HTML (for pro-tip, etc.) */
+function setDialogueHTML(html, onDone) {
+  $dialogue.innerHTML = '';
+  $dialogueArea.classList.remove('clickable');
+  if (_activeProceed) {
+    $dialogueArea.removeEventListener('click', _activeProceed);
+    _activeProceed = null;
+  }
+
+  $controls.classList.remove('reveal');
+  $controls.classList.add('waiting');
+
+  $dialogue.classList.remove('fresh');
+  void $dialogue.offsetWidth;
+  $dialogue.classList.add('fresh');
+
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html;
+  $dialogue.appendChild(wrapper);
+
+  setTimeout(() => {
+    $controls.classList.remove('waiting');
+    $controls.classList.add('reveal');
+  }, 600);
+
+  if (onDone) showTapToContinue(onDone);
+}
+
+function showTapToContinue(callback) {
+  // Remove old tap indicators
+  const old = $dialogue.querySelector('.dialogue-tap');
+  if (old) old.remove();
+
+  const tap = document.createElement('div');
+  tap.className = 'dialogue-tap';
+  tap.textContent = '▶ Tap to continue';
+  $dialogue.appendChild(tap);
+
+  function proceed() {
+    $dialogueArea.removeEventListener('click', proceed);
+    $dialogueArea.classList.remove('clickable');
+    _activeProceed = null;
+    tap.remove();
+    callback();
+  }
+  // Small delay so the skip-click doesn't immediately trigger continue
+  setTimeout(() => {
+    // Clean up any previous proceed listener
+    if (_activeProceed) $dialogueArea.removeEventListener('click', _activeProceed);
+    _activeProceed = proceed;
+    $dialogueArea.addEventListener('click', proceed);
+    $dialogueArea.classList.add('clickable');
+  }, 150);
+}
+
+function clearControls() { $controls.innerHTML = ''; }
+
+function addButton(text, cls, onClick, parent) {
+  const btn = document.createElement('button');
+  btn.textContent = text;
+  btn.className = cls;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation(); // prevent bubbling to dialogueArea
+    onClick(e);
+  });
+  (parent || $controls).appendChild(btn);
+  return btn;
+}
+
+function addBtnRow() {
+  const row = document.createElement('div');
+  row.className = 'btn-row';
+  $controls.appendChild(row);
+  return row;
+}
+
+// ── Canvas sticker management ──
+function canvasRect() { return $canvas.getBoundingClientRect(); }
+
+function addStickerToCanvas(item, opts = {}) {
+  /*
+    opts: { left, top, widthPct, className, zIndex, onLoad, landing }
+    left/top in % of canvas, widthPct in % of canvas width
+  */
+  const el = document.createElement('div');
+  el.className = 'sticker' + (opts.className ? ' ' + opts.className : '');
+  el.dataset.id = item.id;
+  el.style.left = (opts.left ?? 50) + '%';
+  el.style.top = (opts.top ?? 50) + '%';
+  el.style.width = (opts.widthPct ?? 30) + '%';
+  el.style.zIndex = opts.zIndex ?? state.zCounter++;
+  el.style.transform = 'translate(-50%,-50%)';
+
+  if (opts.landing) {
+    el.classList.add('landing');
+    el.addEventListener('animationend', () => el.classList.remove('landing'), { once: true });
+  }
+
+  const img = document.createElement('img');
+  img.src = IMG + item.file;
+  img.alt = item.name;
+  img.draggable = false;
+  if (opts.onLoad) img.addEventListener('load', opts.onLoad);
+  el.appendChild(img);
+
+  // Add rotation handle to every non-plate sticker
+  if (item.id !== 'plate') {
+    const handle = document.createElement('div');
+    handle.className = 'rotate-handle';
+    handle.textContent = '⟳';
+    el.appendChild(handle);
+  }
+
+  $canvas.appendChild(el);
+  state.currentPlate.stickers.push({ el, item, rotation: 0 });
+
+  // Enable drag on everything except the plate
+  if (item.id !== 'plate') enableDrag(el);
+
+  return el;
+}
+
+// ── Drag logic (mouse + touch) ──
+let dragState = null;
+
+function enableDrag(stickerEl) {
+  stickerEl.addEventListener('mousedown', onPointerStart);
+  stickerEl.addEventListener('touchstart', onPointerStart, { passive: false });
+  stickerEl.addEventListener('click', onStickerClick);
+}
+
+const NO_DRAG_PHASES = new Set(['welcome', 'plate']);
+
+// IDs that are not removable dishes (plate, riceboy, sauces, egg)
+const NON_DISH_IDS = new Set(['plate', 'riceboy', SUNNY_EGG.id, ...SAUCES.map(s => s.id)]);
+
+function onStickerClick(e) {
+  if (NO_DRAG_PHASES.has(state.phase)) return;
+  $$('.sticker.selected', $canvas).forEach(s => s.classList.remove('selected'));
+  e.currentTarget.classList.add('selected');
+  state.selectedSticker = e.currentTarget;
+
+  // In play mode, show contextual controls for dishes
+  if (state.phase === 'play') {
+    const el = e.currentTarget;
+    const stickerEntry = state.currentPlate.stickers.find(s => s.el === el);
+    if (stickerEntry && !NON_DISH_IDS.has(stickerEntry.item.id)) {
+      showPlayDishControls(el, stickerEntry.item);
+    }
+  }
+}
+
+// Show remove + add-more when a dish is tapped during play mode
+function showPlayDishControls(stickerEl, item) {
+  clearControls();
+  setDialogue(`${item.name}? Don't want already ah?`);
+  const row = addBtnRow();
+  addButton('Remove ' + item.name, 'btn-danger btn-sm', () => {
+    removeSticker(stickerEl, item);
+    state.currentPlate.dishCount--;
+    setDialogue("Ok ok, Auntie take back! Want to add something else?");
+    clearControls();
+    const r = addBtnRow();
+    addButton('Add more dishes', 'btn-primary btn-sm', () => showDishRound(), r);
+    addButton('Continue arranging', 'btn-secondary btn-sm', () => showFreeArrange(), r);
+  }, row);
+  addButton('Keep lah!', 'btn-cancel btn-sm', () => {
+    showFreeArrange();
+  }, row);
+  const row2 = addBtnRow();
+  addButton('Add more dishes', 'btn-link btn-sm', () => showDishRound(), row2);
+  addLayerButtons(row2);
+  addButton("Done! ✓", 'btn-accent btn-sm', () => {
+    clearArrows();
+    showCheckoutQuestion();
+  }, row2);
+}
+
+// Helper: get current rotation for a sticker element
+function getStickerRotation(el) {
+  const entry = state.currentPlate.stickers.find(s => s.el === el);
+  return entry ? (entry.rotation || 0) : 0;
+}
+
+// Helper: set rotation for a sticker element (state + DOM)
+function setStickerRotation(el, deg) {
+  const entry = state.currentPlate.stickers.find(s => s.el === el);
+  if (entry) entry.rotation = deg;
+  el.style.transform = `translate(-50%,-50%) rotate(${deg}deg)`;
+}
+
+function onPointerStart(e) {
+  if (NO_DRAG_PHASES.has(state.phase)) return;
+  e.preventDefault();
+  const el = e.currentTarget;
+  el.classList.add('dragging');
+
+  $$('.sticker.selected', $canvas).forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedSticker = el;
+
+  const touch = e.touches ? e.touches[0] : e;
+  const elRect = el.getBoundingClientRect();
+
+  // Detect: rotate handle or move?
+  const isRotate = e.target.closest('.rotate-handle');
+
+  if (isRotate) {
+    // Rotation mode — record center of sticker and starting angle
+    const centerX = elRect.left + elRect.width / 2;
+    const centerY = elRect.top + elRect.height / 2;
+    const startAngle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
+    const currentRotation = getStickerRotation(el);
+
+    dragState = { el, mode: 'rotate', centerX, centerY, startAngle, startRotation: currentRotation };
+  } else {
+    // Move mode (existing behavior)
+    const offsetX = touch.clientX - elRect.left - elRect.width / 2;
+    const offsetY = touch.clientY - elRect.top - elRect.height / 2;
+
+    dragState = { el, mode: 'move', offsetX, offsetY };
+  }
+
+  document.addEventListener('mousemove', onPointerMove);
+  document.addEventListener('mouseup', onPointerEnd);
+  document.addEventListener('touchmove', onPointerMove, { passive: false });
+  document.addEventListener('touchend', onPointerEnd);
+}
+
+function onPointerMove(e) {
+  if (!dragState) return;
+  e.preventDefault();
+  const touch = e.touches ? e.touches[0] : e;
+
+  if (dragState.mode === 'rotate') {
+    // Calculate new angle from sticker center
+    const currentAngle = Math.atan2(
+      touch.clientY - dragState.centerY,
+      touch.clientX - dragState.centerX
+    );
+    const angleDelta = (currentAngle - dragState.startAngle) * (180 / Math.PI);
+    const newRotation = dragState.startRotation + angleDelta;
+    setStickerRotation(dragState.el, newRotation);
+  } else {
+    // Move mode (existing behavior)
+    const rect = canvasRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    const pctX = (x / rect.width) * 100;
+    const pctY = (y / rect.height) * 100;
+    dragState.el.style.left = pctX + '%';
+    dragState.el.style.top = pctY + '%';
+  }
+}
+
+function onPointerEnd() {
+  if (dragState) {
+    dragState.el.classList.remove('dragging');
+    // Rotation is already saved in state via setStickerRotation
+    dragState = null;
+  }
+  document.removeEventListener('mousemove', onPointerMove);
+  document.removeEventListener('mouseup', onPointerEnd);
+  document.removeEventListener('touchmove', onPointerMove);
+  document.removeEventListener('touchend', onPointerEnd);
+}
+
+// Click anywhere outside a sticker → deselect (but not on buttons)
+document.addEventListener('click', (e) => {
+  if (NO_DRAG_PHASES.has(state.phase)) return;
+  if (!state.selectedSticker) return;
+  // Don't deselect when clicking stickers or buttons
+  if (e.target.closest('.sticker') || e.target.closest('button')) return;
+  $$('.sticker.selected', $canvas).forEach(s => s.classList.remove('selected'));
+  state.selectedSticker = null;
+});
+
+// ── Phase: WELCOME ──
+function showWelcome() {
+  state.phase = 'welcome';
+  $canvas.classList.add('hidden');
+  $playArea.classList.add('hidden');
+  clearControls();
+  setDialogue(pick(LINES.welcome));
+
+  const row = addBtnRow();
+  ['Ah Girl','Ah Boy','Mei Nu','Shuai Ge'].forEach(name => {
+    addButton(name, 'btn-primary', () => {
+      state.playerName = name;
+      showPlate();
+    }, row);
+  });
+}
+
+// ── Phase: PLATE ──
+function showPlate() {
+  state.phase = 'plate';
+  $canvas.classList.remove('hidden');
+  $canvas.innerHTML = '';
+  clearControls();
+
+  // reset current plate
+  state.currentPlate = { items: [], stickers: [], dishCount: 0, hasRice: false, hasSauce: false, hasSunnyEgg: false };
+
+  // add plate
+  state.currentPlate.items.push(PLATE_ITEM);
+
+  const plateEl = addStickerToCanvas(PLATE_ITEM, {
+    left: 50, top: 50, widthPct: SIZE.plate, zIndex: 1, landing: true, className: 'locked',
+  });
+
+  // plate note
+  const note = document.createElement('div');
+  note.className = 'plate-note';
+  note.textContent = 'Psst... this is also a sticker! 🍽️';
+  plateEl.appendChild(note);
+
+  setDialogue(say('plateIntro'), () => showRiceQuestion());
+  updateTotal();
+}
+
+// ── Phase: RICE ──
+function showRiceQuestion() {
+  state.phase = 'rice';
+  clearControls();
+  setDialogue(say('wantRice'));
+
+  const row = addBtnRow();
+  addButton('Yes, gimme rice!', 'btn-primary', () => {
+    state.currentPlate.hasRice = true;
+    state.currentPlate.items.push(RICEBOY_ITEM);
+    updateTotal();
+
+    const rb = addStickerToCanvas(RICEBOY_ITEM, {
+      left: 50, top: 46, widthPct: SIZE.riceboy, zIndex: 5, landing: true,
+    });
+
+    clearControls();
+    setDialogue('');  // clear dialogue while Riceboy lands
+
+    // Wait for Riceboy to land, THEN show bubble + dialogue
+    rb.addEventListener('animationend', () => {
+      // speech bubble pops in after landing
+      const bubble = document.createElement('div');
+      bubble.className = 'riceboy-bubble';
+      bubble.textContent = "Hi, I'm Riceboy!";
+      rb.appendChild(bubble);
+
+      // short pause to let bubble register, then show tap-to-continue
+      setTimeout(() => {
+        setDialogue(say('riceYes'), () => showDishRound());
+      }, 400);
+    }, { once: true });
+  }, row);
+
+  addButton('No rice', 'btn-cancel', () => {
+    setDialogue(say('riceNo'), () => showDishRound());
+    clearControls();
+  }, row);
+}
+
+// ── Phase: DISHES ──
+function showDishRound() {
+  state.phase = 'dishes';
+  clearControls();
+  deselectShelfDish();
+
+  // fade out Riceboy's speech bubble if still visible
+  const bubble = $canvas.querySelector('.riceboy-bubble');
+  if (bubble) bubble.classList.add('fade-out');
+
+  const isFirst = state.currentPlate.dishCount === 0;
+  setDialogue(isFirst ? say('whatFirst') : say('whatElse'));
+
+  const row = addBtnRow();
+  const cats = [
+    { key:'veggies', label:'🥬 Veggies' },
+    { key:'meat', label:'🍖 Meat' },
+    { key:'fish', label:'🐟 Fish' },
+    { key:'egg', label:'🥚 Egg' },
+  ];
+  cats.forEach(cat => {
+    addButton(cat.label, 'btn-primary', () => showCategory(cat.key), row);
+  });
+}
+
+function showCategory(catKey) {
+  state.phase = 'dishCategory';
+  clearControls();
+  closeDishOverlay(); // remove any existing overlay
+
+  const items = CATALOGUE[catKey];
+  const label = catKey.charAt(0).toUpperCase() + catKey.slice(1);
+  setDialogue(`Ok, showing you the ${label}! Tap one you like~`);
+
+  // Create overlay on top of canvas
+  const overlay = document.createElement('div');
+  overlay.className = 'dish-overlay';
+  overlay.id = 'dishOverlay';
+
+  // back button inside overlay
+  const backBtn = document.createElement('button');
+  backBtn.textContent = '← Back to categories';
+  backBtn.className = 'btn-cancel btn-sm overlay-back';
+  backBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeDishOverlay();
+    showDishRound();
+  });
+  overlay.appendChild(backBtn);
+
+  // grid
+  const grid = document.createElement('div');
+  grid.className = 'item-grid';
+  overlay.appendChild(grid);
+
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <img src="${IMG}${item.file}" alt="${item.name}" loading="lazy">
+      <div class="item-name">${item.name}</div>
+      <div class="item-price">$${item.price.toFixed(2)}</div>
+    `;
+    card.addEventListener('click', (e) => { e.stopPropagation(); placeDish(item); });
+    grid.appendChild(card);
+  });
+
+  $canvas.appendChild(overlay);
+}
+
+function closeDishOverlay() {
+  const existing = document.getElementById('dishOverlay');
+  if (existing) existing.remove();
+}
+
+function placeDish(item) {
+  closeDishOverlay(); // close the overlay so player sees the sticker land
+  deselectShelfDish(); // clear any previous shelf selection
+
+  state.currentPlate.items.push(item);
+  state.currentPlate.dishCount++;
+  updateTotal();
+
+  // Place new dish, then redistribute the whole row evenly
+  const newSticker = addStickerToCanvas(item, {
+    left: 50, top: SHELF_TOP, widthPct: SIZE.dish, landing: true,
+  });
+
+  // Make dish tappable on shelf for removal
+  newSticker.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (state.phase === 'dishes' || state.phase === 'dishCategory') {
+      selectShelfDish(newSticker, item);
+    }
+  });
+
+  // Reflow all dish stickers into an even row
+  redistributeShelf();
+
+  // dialogue
+  if (state.currentPlate.dishCount === 1) {
+    setDialogue(say('firstDish'));
+  } else if (state.currentPlate.dishCount >= 5) {
+    setDialogue(say('plateFull'));
+  } else {
+    setDialogue(say('goodChoice'));
+  }
+
+  showDishControls();
+}
+
+function showDishControls() {
+  clearControls();
+  const row = addBtnRow();
+  addButton('Add more dishes', 'btn-primary', () => { deselectShelfDish(); showDishRound(); }, row);
+  addButton('Done with dishes', 'btn-secondary', () => { deselectShelfDish(); showSauceQuestion(); }, row);
+
+  if (state.currentPlate.dishCount > 0) {
+    const hint = document.createElement('div');
+    hint.className = 'dish-hint';
+    hint.textContent = 'Tap a dish to remove it';
+    $controls.appendChild(hint);
+  }
+}
+
+// ── Shelf dish selection & removal ──
+function selectShelfDish(stickerEl, item) {
+  // Deselect previous
+  deselectShelfDish();
+
+  // Highlight this one
+  stickerEl.classList.add('selected');
+  state.selectedShelfDish = { el: stickerEl, item };
+
+  // Show remove button in controls
+  setDialogue(`${item.name}? Don't want already ah?`);
+  clearControls();
+  const row = addBtnRow();
+  addButton('Put back!', 'btn-danger', () => removeDish(stickerEl, item), row);
+  addButton('Keep lah!', 'btn-cancel', () => {
+    deselectShelfDish();
+    setDialogue(say('whatElse'));
+    showDishControls();
+  }, row);
+}
+
+function deselectShelfDish() {
+  if (state.selectedShelfDish) {
+    state.selectedShelfDish.el.classList.remove('selected');
+    state.selectedShelfDish = null;
+  }
+}
+
+function removeDish(stickerEl, item) {
+  removeSticker(stickerEl, item);
+  state.currentPlate.dishCount--;
+  state.selectedShelfDish = null;
+  redistributeShelf();
+
+  setDialogue("Ok ok, Auntie take back! What else you want?");
+  showDishControls();
+}
+
+// Generic: remove any sticker + item from state
+function removeSticker(stickerEl, item) {
+  stickerEl.remove();
+  const sIdx = state.currentPlate.stickers.findIndex(s => s.el === stickerEl);
+  if (sIdx !== -1) state.currentPlate.stickers.splice(sIdx, 1);
+  const iIdx = state.currentPlate.items.findIndex(i => i.id === item.id);
+  if (iIdx !== -1) state.currentPlate.items.splice(iIdx, 1);
+  updateTotal();
+}
+
+// ── Redistribute dish stickers into an even horizontal row ──
+function redistributeShelf() {
+  // Collect only dish stickers (not plate, riceboy, sauces, sunny egg)
+  const nonDishIds = new Set(['plate', 'riceboy', '21', '24', '25']);
+  const dishStickers = state.currentPlate.stickers.filter(s => !nonDishIds.has(s.item.id));
+  const count = dishStickers.length;
+  if (count === 0) return;
+
+  // Spread dishes evenly across the plate width
+  // Dish width is SIZE.dish (34%), so half = 17%
+  // Usable range: ~15% to ~85% (keeping dishes within plate bounds)
+  const minLeft = 17;
+  const maxLeft = 83;
+
+  if (count === 1) {
+    dishStickers[0].el.style.left = '50%';
+  } else {
+    const step = (maxLeft - minLeft) / (count - 1);
+    dishStickers.forEach((s, i) => {
+      s.el.style.left = (minLeft + step * i) + '%';
+    });
+  }
+
+  // All at the same top
+  dishStickers.forEach(s => {
+    s.el.style.top = SHELF_TOP + '%';
+  });
+}
+
+// ── Phase: SAUCE ──
+function showSauceQuestion() {
+  closeDishOverlay();
+  // skip sauce if no riceboy
+  if (!state.currentPlate.hasRice) {
+    showSunnyEggQuestion();
+    return;
+  }
+  state.phase = 'sauce';
+  clearControls();
+  setDialogue(say('wantSauce'));
+
+  const row = addBtnRow();
+  SAUCES.forEach(sauce => {
+    addButton(sauce.name + ' ($' + sauce.price.toFixed(2) + ')', 'btn-primary', () => {
+      state.currentPlate.hasSauce = true;
+      state.currentPlate.items.push(sauce);
+      updateTotal();
+
+      // sauce goes on riceboy head area
+      const sauceEl = addStickerToCanvas(sauce, {
+        left: 50, top: 36, widthPct: SIZE.sauce, landing: true,
+      });
+
+      setDialogue(say('goodChoice'));
+      clearControls();
+      const row2 = addBtnRow();
+      addButton('Next →', 'btn-primary btn-sm', () => showSunnyEggQuestion(), row2);
+      addButton('Change sauce', 'btn-link btn-sm', () => {
+        removeSticker(sauceEl, sauce);
+        state.currentPlate.hasSauce = false;
+        showSauceQuestion();
+      }, row2);
+    }, row);
+  });
+  addButton('No thanks', 'btn-cancel', () => {
+    clearControls();
+    showSunnyEggQuestion();
+  }, row);
+
+  // Back to dishes
+  const row2 = addBtnRow();
+  addButton('← Back to dishes', 'btn-link btn-sm', () => showDishRound(), row2);
+}
+
+// ── Phase: SUNNY EGG ──
+function showSunnyEggQuestion() {
+  if (!state.currentPlate.hasRice) {
+    // no riceboy, skip (or inform)
+    state.phase = 'sunnyEgg';
+    clearControls();
+    setDialogue(say('noSunnyEggNoRice'), () => showPlayMode());
+    return;
+  }
+  state.phase = 'sunnyEgg';
+  clearControls();
+  setDialogue(say('wantSunnyEgg'));
+
+  const row = addBtnRow();
+  addButton('Sunny Egg! ($' + SUNNY_EGG.price.toFixed(2) + ')', 'btn-primary', () => {
+    state.currentPlate.hasSunnyEgg = true;
+    state.currentPlate.items.push(SUNNY_EGG);
+    updateTotal();
+
+    // egg on riceboy head
+    const eggEl = addStickerToCanvas(SUNNY_EGG, {
+      left: 50, top: 30, widthPct: SIZE.sunnyEgg, landing: true,
+    });
+
+    setDialogue(say('goodChoice'));
+    clearControls();
+    const row2 = addBtnRow();
+    addButton('Next →', 'btn-primary btn-sm', () => showPlayMode(), row2);
+    addButton('Remove egg', 'btn-link btn-sm', () => {
+      removeSticker(eggEl, SUNNY_EGG);
+      state.currentPlate.hasSunnyEgg = false;
+      showSunnyEggQuestion();
+    }, row2);
+  }, row);
+
+  addButton('No thanks', 'btn-cancel', () => {
+    clearControls();
+    showPlayMode();
+  }, row);
+
+  // Back to sauce
+  const row2 = addBtnRow();
+  addButton('← Back to sauce', 'btn-link btn-sm', () => showSauceQuestion(), row2);
+}
+
+// ── Tutorial arrow helpers ──
+function addArrow(left, top, direction, label) {
+  const el = document.createElement('div');
+  el.className = 'tutorial-arrow dir-' + direction;
+  el.style.left = left + '%';
+  el.style.top = top + '%';
+  el.innerHTML = '<span class="arrow-tri"></span>' +
+    (label ? `<span class="arrow-label">${label}</span>` : '');
+  $canvas.appendChild(el);
+  return el;
+}
+
+function clearArrows() {
+  $$('.tutorial-arrow', $canvas).forEach(a => a.remove());
+}
+
+// ── Tutorial / Free-arrange shared buttons ──
+function addTutorialNav(nextFn) {
+  const row = addBtnRow();
+  addButton('Next →', 'btn-primary btn-sm', () => {
+    clearArrows();
+    nextFn();
+  }, row);
+  addButton('Thankew Auntie, ownself do!', 'btn-cancel btn-sm', () => {
+    clearArrows();
+    showFreeArrange();
+  }, row);
+}
+
+function addLayerButtons(row) {
+  addButton('⬆ Front', 'btn-secondary btn-sm', () => {
+    if (state.selectedSticker) {
+      const cur = parseInt(state.selectedSticker.style.zIndex) || 0;
+      state.selectedSticker.style.zIndex = cur + 1;
+    }
+  }, row);
+  addButton('⬇ Back', 'btn-secondary btn-sm', () => {
+    if (state.selectedSticker) {
+      const cur = parseInt(state.selectedSticker.style.zIndex) || 0;
+      if (cur > 2) state.selectedSticker.style.zIndex = cur - 1;
+    }
+  }, row);
+}
+
+// ── Phase: PLAY MODE ──
+function showPlayMode() {
+  state.phase = 'play';
+  clearControls();
+
+  setDialogueHTML(say('playMode') + '<div class="pro-tip">💡 Practice arranging here — when your stickers arrive, you\'ll know exactly where to paste everything!</div>');
+
+  const row = addBtnRow();
+  addButton('Show me how!', 'btn-primary btn-sm', () => startTutorial(), row);
+  addButton('I know already!', 'btn-secondary btn-sm', () => showFreeArrange(), row);
+}
+
+// ══════════════════════════════════════════════════════════
+//  TUTORIAL: step-by-step guided arrangement
+// ══════════════════════════════════════════════════════════
+function startTutorial() {
+  clearControls();
+  clearArrows();
+  tutorialStepRiceboy();
+}
+
+// Step 1: Reposition Riceboy
+function tutorialStepRiceboy() {
+  setDialogue("First — drag your dishes off Riceboy so you can see him! Then move Riceboy so he sits slightly above the inner circle of the plate.");
+
+  // Arrow pointing to where riceboy should go
+  addArrow(50, 40, 'down', 'Riceboy here');
+
+  addTutorialNav(() => {
+    // Decide next step based on what player has
+    if (state.currentPlate.hasSauce) {
+      tutorialStepSauce();
+    } else if (state.currentPlate.hasSunnyEgg) {
+      tutorialStepEgg();
+    } else if (state.currentPlate.dishCount > 0) {
+      tutorialStepDishes();
+    } else {
+      showFreeArrange();
+    }
+  });
+}
+
+// Step 2: Place sauce over Riceboy's head
+function tutorialStepSauce() {
+  clearControls();
+  setDialogue("Now place the sauce over Riceboy's head — it should fit right around his eyes. Drape it nicely!");
+
+  // Arrow pointing to sauce position on riceboy
+  addArrow(50, 28, 'down', 'sauce here');
+
+  addTutorialNav(() => {
+    if (state.currentPlate.hasSunnyEgg) {
+      tutorialStepEgg();
+    } else if (state.currentPlate.dishCount > 0) {
+      tutorialStepDishes();
+    } else {
+      showFreeArrange();
+    }
+  });
+}
+
+// Step 3: Place sunny egg on the other side of Riceboy's head
+function tutorialStepEgg() {
+  clearControls();
+  setDialogue("Place the sunny egg on the other side of Riceboy's head — it should also fit around his eye. Like a cute little hat!");
+
+  // Arrow pointing to egg position
+  addArrow(38, 25, 'down', 'egg here');
+
+  addTutorialNav(() => {
+    if (state.currentPlate.dishCount > 0) {
+      tutorialStepDishes();
+    } else {
+      showFreeArrange();
+    }
+  });
+}
+
+// Step 4: Place dishes around Riceboy
+function tutorialStepDishes() {
+  clearControls();
+  setDialogue("Now place your dishes around Riceboy! Consider going back-to-front, outside-in — the last sticker you paste should be closest to the bottom of the plate.");
+
+  // Arrows pointing to dish placement spots around the rice
+  addArrow(20, 45, 'right', 'dishes');
+  addArrow(80, 45, 'left', 'dishes');
+  addArrow(30, 72, 'up', 'dishes');
+  addArrow(70, 72, 'up', 'dishes');
+  addArrow(50, 82, 'up', 'front dish last');
+
+  addTutorialNav(() => tutorialStepLayers());
+}
+
+// Step 5: Layer order + finish
+function tutorialStepLayers() {
+  clearControls();
+  setDialogue("Looking good! If dishes overlap funny, tap one and use these buttons. Tap outside the plate to see your clean design~");
+
+  const row = addBtnRow();
+  addLayerButtons(row);
+  addButton("Done! ✓", 'btn-accent btn-sm', () => {
+    clearArrows();
+    showCheckoutQuestion();
+  }, row);
+
+  const row2 = addBtnRow();
+  addButton('Thankew Auntie, ownself do!', 'btn-cancel btn-sm', () => {
+    clearArrows();
+    showFreeArrange();
+  }, row2);
+}
+
+// ── Free arrange mode (no tutorial, just buttons) ──
+function showFreeArrange() {
+  clearArrows();
+  setDialogue("Ok, arrange until shiok! Tap outside to admire, hit Done when ready~");
+  clearControls();
+  const row = addBtnRow();
+  addLayerButtons(row);
+  addButton("Done! ✓", 'btn-accent btn-sm', () => {
+    clearArrows();
+    showCheckoutQuestion();
+  }, row);
+}
+
+// ── Phase: CHECKOUT QUESTION ──
+function showCheckoutQuestion() {
+  state.phase = 'checkout';
+  clearControls();
+  $playArea.classList.add('hidden');
+  // deselect stickers
+  $$('.sticker.selected', $canvas).forEach(s => s.classList.remove('selected'));
+  state.selectedSticker = null;
+
+  setDialogue(say('checkout'));
+
+  const row = addBtnRow();
+  addButton('Checkout! 🧾', 'btn-accent', () => showSummary(), row);
+
+  const row2 = addBtnRow();
+  addButton('← Keep arranging', 'btn-link btn-sm', () => showFreeArrange(), row2);
+  addButton('Add more dishes', 'btn-link btn-sm', () => showDishRound(), row2);
+  addButton('Another plate!', 'btn-link btn-sm', () => addAnotherPlate(), row2);
+}
+
+// ── Another plate ──
+function addAnotherPlate() {
+  // snapshot current plate into cart
+  const plateSnapshot = {
+    items: [...state.currentPlate.items],
+    thumbnail: createMiniThumbnail(),
+  };
+  state.cart.push(plateSnapshot);
+  renderCartThumbnails();
+  updateTotal();
+
+  clearControls();
+  setDialogue(say('anotherPlate'), () => showWelcome());
+}
+
+function createMiniThumbnail() {
+  // Use html2canvas-like approach: just grab plate image as thumbnail
+  const mini = document.createElement('div');
+  mini.className = 'mini-plate';
+  const img = document.createElement('img');
+  img.src = IMG + 'plate.png';
+  img.alt = 'Plate in cart';
+  mini.appendChild(img);
+  const label = document.createElement('div');
+  label.className = 'cart-label';
+  label.textContent = 'In Cart';
+  mini.appendChild(label);
+  return mini;
+}
+
+function renderCartThumbnails() {
+  $cartArea.innerHTML = '';
+  state.cart.forEach(plate => {
+    $cartArea.appendChild(plate.thumbnail);
+  });
+}
+
+// ── Sticker pack constants ──
+const PACK_PRICE = 28.80;
+const PACK_TOTAL_STICKERS = 28; // 1 plate + 1 riceboy + 23 dishes + 1 egg + 2 sauces
+const PACK_URL = 'https://www.pointyrice.com/products/sg60-sticker-pack';
+
+// ── Phase: SUMMARY ──
+function showSummary() {
+  state.phase = 'summary';
+  clearControls();
+  $canvas.classList.add('hidden');
+  $playArea.classList.add('hidden');
+
+  setDialogue(say('finalCheckout'));
+
+  const row = addBtnRow();
+  addButton('🛒 Add to Cart (Coming Soon!)', 'btn-accent', () => {
+    alert('Shopify integration coming soon! Your delicious plate will be available for purchase on pointyrice.com');
+  }, row);
+  addButton('Start Over', 'btn-cancel', () => {
+    restartGame();
+  }, row);
+
+  $playArea.classList.remove('hidden');
+  $playArea.innerHTML = '';
+
+  const allPlates = [...state.cart, { items: state.currentPlate.items }];
+
+  // Count items across all plates
+  let grandTotal = 0;
+  let totalDishes = 0;
+  let totalPlates = 0;
+  let totalRiceboys = 0;
+  let totalSauces = 0;
+  let totalEggs = 0;
+
+  const sauceIds = new Set(SAUCES.map(s => s.id));
+
+  allPlates.forEach(plate => {
+    plate.items.forEach(item => {
+      grandTotal += item.price;
+      if (item.id === 'plate') totalPlates++;
+      else if (item.id === 'riceboy') totalRiceboys++;
+      else if (sauceIds.has(item.id)) totalSauces++;
+      else if (item.id === SUNNY_EGG.id) totalEggs++;
+      else totalDishes++;
+    });
+  });
+
+  const totalStickers = totalPlates + totalRiceboys + totalDishes + totalSauces + totalEggs;
+
+  // Show pack suggestion if total exceeds pack price
+  if (grandTotal > PACK_PRICE) {
+    const savings = (grandTotal - PACK_PRICE).toFixed(2);
+    const suggestion = document.createElement('div');
+    suggestion.className = 'pack-suggestion';
+    suggestion.innerHTML = `
+      <div class="pack-title">💡 Auntie's Pro Tip!</div>
+      <div class="pack-detail">
+        Your plate has <strong>${totalStickers} stickers</strong>
+        (${totalPlates} plate, ${totalRiceboys} Riceboy, ${totalDishes} dish${totalDishes !== 1 ? 'es' : ''}${totalSauces ? ', ' + totalSauces + ' sauce' : ''}${totalEggs ? ', ' + totalEggs + ' egg' : ''})
+        totalling <strong>$${grandTotal.toFixed(2)}</strong>.
+      </div>
+      <div class="pack-detail">
+        The <strong>CaiFUN Sticker Pack</strong> comes with all ${PACK_TOTAL_STICKERS} stickers for just <strong>$${PACK_PRICE.toFixed(2)}</strong>!
+      </div>
+      <div class="pack-savings">You save $${savings}! Auntie say buy the pack lah~</div>
+      <a href="${PACK_URL}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;background:#f8b401;color:#2b2b2b;font-family:'Poetsen One',cursive;font-size:.95rem;padding:10px 24px;border-radius:12px;text-decoration:none;box-shadow:0 3px 0 #c48e00;">🛒 Get the Sticker Pack!</a>
+    `;
+    $playArea.appendChild(suggestion);
+  }
+
+  const summary = document.createElement('div');
+  summary.className = 'order-summary bounce-in';
+
+  let html = '<h2>Your Order</h2>';
+  let runTotal = 0;
+
+  allPlates.forEach((plate, idx) => {
+    html += `<div class="plate-group-header">Plate ${idx + 1}</div>`;
+    plate.items.forEach(item => {
+      html += `<div class="order-line"><span>${item.name}</span><span>$${item.price.toFixed(2)}</span></div>`;
+      runTotal += item.price;
+    });
+  });
+
+  html += `<div class="order-total"><span>Total (${totalStickers} stickers)</span><span>$${runTotal.toFixed(2)}</span></div>`;
+
+  if (grandTotal > PACK_PRICE) {
+    html += `<div class="order-line" style="margin-top:8px;border-top:1px dashed #78b29b;padding-top:8px;">
+      <span style="color:#78b29b;font-weight:700;">Sticker Pack price</span>
+      <span style="color:#78b29b;font-weight:700;">$${PACK_PRICE.toFixed(2)}</span>
+    </div>`;
+  }
+
+  summary.innerHTML = html;
+  $playArea.appendChild(summary);
+}
+
+// ── Restart game ──
+function restartGame() {
+  state.cart = [];
+  state.currentPlate = { items: [], stickers: [], dishCount: 0, hasRice: false, hasSauce: false, hasSunnyEgg: false };
+  $cartArea.innerHTML = '';
+  $playArea.classList.add('hidden');
+  $playArea.innerHTML = '';
+  updateTotal();
+  showWelcome();
+}
+
+// ── INIT ──
+document.getElementById('restartBtn').addEventListener('click', () => {
+  if (state.phase === 'welcome') return;
+  if (confirm('Start over ah? Your current plate will be lost!')) {
+    restartGame();
+  }
+});
+
+showWelcome();
+
+})();
+</script>
+</body>
+</html>
